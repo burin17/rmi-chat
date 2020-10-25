@@ -1,4 +1,4 @@
-package com.gmail.burinigor7.entity;
+package com.gmail.burinigor7.domain;
 
 import java.io.Serializable;
 

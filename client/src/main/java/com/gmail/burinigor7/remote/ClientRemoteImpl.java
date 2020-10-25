@@ -1,6 +1,6 @@
 package com.gmail.burinigor7.remote;
 
-import com.gmail.burinigor7.entity.Message;
+import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 
 import java.rmi.AlreadyBoundException;
@@ -11,10 +11,10 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ClientRemoteImpl implements ClientRemote {
     private final Registry registry;
-    private final int id;
-    public ClientRemoteImpl(int id) {
-        this.id = id;
-        String remoteObjectName = "User" + id;
+    private final long sessionId;
+    public ClientRemoteImpl(long sessionId) {
+        this.sessionId = sessionId;
+        String remoteObjectName = "User" + sessionId;
         try {
             UnicastRemoteObject.exportObject(this, 0);
             registry = LocateRegistry.getRegistry(1099);
@@ -28,5 +28,10 @@ public class ClientRemoteImpl implements ClientRemote {
     public void sendMessageToUser(Message msg) {
         System.out.println("Message: " + msg.getContent() +
                 "; Sender: " + msg.getSender().getUsername());
+    }
+
+    @Override
+    public void disconnect() {
+
     }
 }

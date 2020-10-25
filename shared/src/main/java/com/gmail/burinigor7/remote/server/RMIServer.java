@@ -1,7 +1,7 @@
 package com.gmail.burinigor7.remote.server;
 
-import com.gmail.burinigor7.entity.Message;
-import com.gmail.burinigor7.entity.User;
+import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.domain.User;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -14,11 +14,11 @@ public interface RMIServer extends Remote {
 
     User connect(String username, String password) throws RemoteException;
 
-    List<Message> getDialog(User sender, User recipient) throws RemoteException;
+    List<Message> getDialog(User usr1, User usr2) throws RemoteException;
 
-    List<Message> getCommonDialog() throws RemoteException;
+    List<Message> getCommonDialog(User client) throws RemoteException;
 
-    List<User> getActiveUsers() throws RemoteException;
+    List<User> getActiveUsers(User client) throws RemoteException;
 
-    boolean disconnect() throws RemoteException;
+    boolean disconnect(User client) throws RemoteException;
 }

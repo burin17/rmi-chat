@@ -1,4 +1,4 @@
-package com.gmail.burinigor7.entity;
+package com.gmail.burinigor7.domain;
 
 import com.gmail.burinigor7.remote.server.RMIServer;
 
@@ -12,21 +12,50 @@ import java.util.Objects;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
-    private final Registry registry;
+    private static RMIServer SERVER;
+    private static final Registry REGISTRY;
     private int id;
     private String username;
     private String password;
     private int age;
+    private long sessionId;
 
-    {
+    static {
         try {
-            registry = LocateRegistry.getRegistry(1099);
+            REGISTRY = LocateRegistry.getRegistry(1099);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
     public User() {
+        initRemoteServerObject();
+    }
+
+    private static void initRemoteServerObject() {
+        try {
+            if (SERVER == null)
+                SERVER = (RMIServer) REGISTRY.lookup("RMIServer");
+        } catch (RemoteException | NotBoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static User connectToServer(String username, String password) {
+        try {
+            initRemoteServerObject();
+            return SERVER.connect(username, password);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean disconnectFromServer() {
+        try {
+            return SERVER.disconnect(this);
+        } catch (RemoteException e) {
+            throw new RuntimeException();
+        }
     }
 
     public User(int id, String username, String password, int age) {
@@ -34,14 +63,14 @@ public class User implements Serializable {
         this.username = username;
         this.password = password;
         this.age = age;
+        initRemoteServerObject();
     }
 
     public void sendMessage(String content, User recipient) {
         Message msg = new Message(this, recipient, content);
         try {
-            RMIServer server = (RMIServer) registry.lookup("RMIServer");
-            server.sendMessageToServer(msg);
-        } catch (RemoteException | NotBoundException e) {
+            SERVER.sendMessageToServer(msg);
+        } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
@@ -49,27 +78,24 @@ public class User implements Serializable {
     public void sendCommonMessage(String content) {
         Message msg = new Message(this, null, content);
         try {
-            RMIServer server = (RMIServer) registry.lookup("RMIServer");
-            server.sendCommonMessageToServer(msg);
-        } catch (RemoteException | NotBoundException e) {
+            SERVER.sendCommonMessageToServer(msg);
+        } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<Message> getDialog(User recipient) {
+    public List<Message> getDialog(User usr) {
         try {
-             RMIServer server = (RMIServer) registry.lookup("RMIServer");
-             return server.getDialog(this, recipient);
-        } catch (RemoteException | NotBoundException e) {
+             return SERVER.getDialog(this, usr);
+        } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
     public List<Message> getCommonDialog() {
         try {
-            RMIServer server = (RMIServer) registry.lookup("RMIServer");
-            return server.getCommonDialog();
-        } catch (RemoteException | NotBoundException e) {
+            return SERVER.getCommonDialog(this);
+        } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
@@ -78,32 +104,45 @@ public class User implements Serializable {
         return id;
     }
 
-    public void setId(int id) {
+    public User setId(int id) {
         this.id = id;
+        return this;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public User setUsername(String username) {
         this.username = username;
+        return this;
     }
 
     public int getAge() {
         return age;
     }
 
-    public void setAge(int age) {
+    public User setAge(int age) {
         this.age = age;
+        return this;
+    }
+
+    public long getSessionId() {
+        return sessionId;
+    }
+
+    public User setSessionId(long sessionId) {
+        this.sessionId = sessionId;
+        return this;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public User setPassword(String password) {
         this.password = password;
+        return this;
     }
 
     @Override
