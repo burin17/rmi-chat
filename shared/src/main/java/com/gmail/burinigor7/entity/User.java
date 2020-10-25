@@ -13,19 +13,27 @@ import java.util.Objects;
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
     private final Registry registry;
-    private final int id;
+    private int id;
     private String username;
+    private String password;
     private int age;
 
-    public User(int id, String username, int age) {
-        this.id = id;
-        this.username = username;
-        this.age = age;
+    {
         try {
             registry = LocateRegistry.getRegistry(1099);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public User() {
+    }
+
+    public User(int id, String username, String password, int age) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.age = age;
     }
 
     public void sendMessage(String content, User recipient) {
@@ -38,10 +46,20 @@ public class User implements Serializable {
         }
     }
 
-    public List<Message> allObtainedMessages() {
+    public void sendCommonMessage(String content) {
+        Message msg = new Message(this, null, content);
+        try {
+            RMIServer server = (RMIServer) registry.lookup("RMIServer");
+            server.sendMessageToServer(msg);
+        } catch (RemoteException | NotBoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Message> allDialog(User recipient) {
         try {
              RMIServer server = (RMIServer) registry.lookup("RMIServer");
-             return server.getAllObtainedMessages(this);
+             return server.getDialog(this, recipient);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
@@ -49,6 +67,10 @@ public class User implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getUsername() {
@@ -65,6 +87,14 @@ public class User implements Serializable {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override

@@ -5,8 +5,8 @@ import com.gmail.burinigor7.remote.ClientRemoteImpl;
 
 public class User2Runner {
     public static void main(String[] args) {
-        User user102 = new User(102, "Igor", 20);
+        User user102 = new User(102, "Igor", "123" , 20);
         new ClientRemoteImpl(102);
-        System.out.println(user102.allObtainedMessages());
+        System.out.println(user102.allDialog(null));
     }
 }

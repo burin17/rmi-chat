@@ -15,6 +15,9 @@ public class Message implements Serializable {
         this.content = content;
     }
 
+    public Message() {
+    }
+
     public int getId() {
         return id;
     }

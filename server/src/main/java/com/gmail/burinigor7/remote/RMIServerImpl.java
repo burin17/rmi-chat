@@ -20,12 +20,12 @@ public class RMIServerImpl implements RMIServer {
     private static int msgIdCounter;
     private final Registry registry;
     private final List<User> allUsers = new ArrayList<>() {{
-        add(new User(102, "Igor", 20));
-        add(new User(10, "Lena", 10));
-        add(new User(101, "Vasya", 19));
-        add(new User(103, "Pete", 29));
+        add(new User(102, "Igor", "123" , 20));
+        add(new User(10, "Lena", "123" , 10));
+        add(new User(101, "Vasya", "123" , 19));
+        add(new User(103, "Pete", "123" , 29));
     }};
-    private final List<User> online = new ArrayList<>();
+    private final List<User> activeList = new ArrayList<>();
     private Map<User, List<Message>> msgStorage = new HashMap<>() {{
         for(User usr : RMIServerImpl.this.allUsers)
             put(usr, new ArrayList<>());
@@ -41,7 +41,6 @@ public class RMIServerImpl implements RMIServer {
         }
     }
 
-    //remote
     @Override
     public void sendMessageToServer(Message msg) {
         msg.setId(msgIdCounter++);
@@ -57,12 +56,28 @@ public class RMIServerImpl implements RMIServer {
     }
 
     @Override
-    public boolean authenticate(String username, String password) {
+    public void sendCommonMessageToServer(Message msg) {
+        msg.setId(msgIdCounter);
+
+    }
+
+    @Override
+    public boolean connect(String username, String password) {
         return false;
     }
 
     @Override
-    public List<Message> getAllObtainedMessages(User recipient) {
-        return msgStorage.get(recipient);
+    public List<Message> getDialog(User sender, User recipient) {
+        return msgStorage.get(sender);
+    }
+
+    @Override
+    public List<User> getActiveUsers() {
+        return null;
+    }
+
+    @Override
+    public boolean disconnect() {
+        return false;
     }
 }
