@@ -50,16 +50,25 @@ public class User implements Serializable {
         Message msg = new Message(this, null, content);
         try {
             RMIServer server = (RMIServer) registry.lookup("RMIServer");
-            server.sendMessageToServer(msg);
+            server.sendCommonMessageToServer(msg);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<Message> allDialog(User recipient) {
+    public List<Message> getDialog(User recipient) {
         try {
              RMIServer server = (RMIServer) registry.lookup("RMIServer");
              return server.getDialog(this, recipient);
+        } catch (RemoteException | NotBoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Message> getCommonDialog() {
+        try {
+            RMIServer server = (RMIServer) registry.lookup("RMIServer");
+            return server.getCommonDialog();
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
@@ -111,13 +120,11 @@ public class User implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return id == user.id &&
-                age == user.age &&
-                username.equals(user.username);
+        return id == user.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, age);
+        return Objects.hash(id);
     }
 }

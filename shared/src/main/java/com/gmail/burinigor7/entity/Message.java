@@ -52,11 +52,18 @@ public class Message implements Serializable {
 
     @Override
     public String toString() {
-        return "Message{" +
-                "id=" + id +
-                ", sender=" + sender.getUsername() +
-                ", recipient=" + recipient.getUsername() +
-                ", content='" + content + '\'' +
-                '}';
+        if(recipient != null)
+            return "Message{" +
+                    "id=" + id +
+                    ", sender=" + sender.getUsername() +
+                    ", recipient=" + recipient.getUsername() +
+                    ", content='" + content + '\'' +
+                    '}';
+        else return "Message{" +
+                    "id=" + id +
+                    ", sender=" + sender.getUsername() +
+                    ", common message" +
+                    ", content='" + content + '\'' +
+                    '}';
     }
 }

@@ -25,12 +25,12 @@ public class RMIServerImpl implements RMIServer {
         add(new User(101, "Vasya", "123" , 19));
         add(new User(103, "Pete", "123" , 29));
     }};
-    private final List<User> activeList = new ArrayList<>();
+    private final List<User> activeUsers = new ArrayList<>();
     private Map<User, List<Message>> msgStorage = new HashMap<>() {{
         for(User usr : RMIServerImpl.this.allUsers)
             put(usr, new ArrayList<>());
     }};
-
+    private List<Message> commonMessages = new ArrayList<>();
     public RMIServerImpl() {
         try {
             UnicastRemoteObject.exportObject(this, 0);
@@ -44,31 +44,56 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public void sendMessageToServer(Message msg) {
         msg.setId(msgIdCounter++);
-        String remoteObjectName = "User" + msg.getRecipient().getId();
-        try {
-            ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
-            chatUser.sendMessageToUser(msg);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        } catch (NotBoundException ignore) {}
+        if(activeUsers.contains(msg.getRecipient())) {
+            String remoteObjectName = "User" + msg.getRecipient().getId();
+            try {
+                ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
+                chatUser.sendMessageToUser(msg);
+            } catch (RemoteException | NotBoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
         System.out.println("Persistence message " + msg.getId() + " to database ... ");
         msgStorage.get(msg.getRecipient()).add(msg);
     }
 
     @Override
     public void sendCommonMessageToServer(Message msg) {
-        msg.setId(msgIdCounter);
-
+        msg.setId(msgIdCounter++);
+        for(User active : activeUsers) {
+            String remoteObjectName = "User" + active.getId();
+            try {
+                ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
+                chatUser.sendMessageToUser(msg);
+            } catch (RemoteException | NotBoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        System.out.println("Persistence message " + msg.getId() + " to database ... ");
+        commonMessages.add(msg);
     }
 
     @Override
-    public boolean connect(String username, String password) {
-        return false;
+    public User connect(String username, String password) {
+        for(User usr : allUsers) {
+            if(usr.getUsername().equals(username)) {
+                if(usr.getPassword().equals(password)) {
+                    activeUsers.add(usr);
+                    return usr;
+                } else return null;
+            }
+        }
+        return null;
     }
 
     @Override
     public List<Message> getDialog(User sender, User recipient) {
         return msgStorage.get(sender);
+    }
+
+    @Override
+    public List<Message> getCommonDialog() {
+        return commonMessages;
     }
 
     @Override

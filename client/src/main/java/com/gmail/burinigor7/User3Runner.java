@@ -8,5 +8,6 @@ public class User3Runner {
         User user101 = new User(101, "Vasya", "123" , 19);
         new ClientRemoteImpl(101);
         user101.sendMessage("What's up?", new User(102, "Igor", "123" , 20));
+        System.out.println("common dialog --> " + user101.getCommonDialog());
     }
 }

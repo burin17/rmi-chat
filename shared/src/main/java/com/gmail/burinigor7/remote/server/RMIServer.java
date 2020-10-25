@@ -8,14 +8,17 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 public interface RMIServer extends Remote {
-    void sendMessageToServer(Message msg)
-            throws RemoteException;
-    void sendCommonMessageToServer(Message msg)
-            throws RemoteException;
-    boolean connect(String username, String password)
-            throws RemoteException;
-    List<Message> getDialog(User sender, User recipient)
-            throws RemoteException;
+    void sendMessageToServer(Message msg) throws RemoteException;
+
+    void sendCommonMessageToServer(Message msg) throws RemoteException;
+
+    User connect(String username, String password) throws RemoteException;
+
+    List<Message> getDialog(User sender, User recipient) throws RemoteException;
+
+    List<Message> getCommonDialog() throws RemoteException;
+
     List<User> getActiveUsers() throws RemoteException;
+
     boolean disconnect() throws RemoteException;
 }
