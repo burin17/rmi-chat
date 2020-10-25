@@ -1,9 +1,12 @@
 package com.gmail.burinigor7;
 
-import com.gmail.burinigor7.remote.ChatUserImpl;
+import com.gmail.burinigor7.entity.User;
+import com.gmail.burinigor7.remote.ClientRemoteImpl;
 
 public class User2Runner {
     public static void main(String[] args) {
-        ChatUserImpl user102 = new ChatUserImpl(102);
+        User user102 = new User(102, "Igor", 20);
+        new ClientRemoteImpl(102);
+        System.out.println(user102.allObtainedMessages());
     }
 }
