@@ -6,27 +6,15 @@ import java.io.Serializable;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.List;
 import java.util.Objects;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
     private static RMIServer SERVER;
-    private static final Registry REGISTRY;
     private int id;
     private String username;
     private String password;
-    private int age;
-    private long sessionId;
-
-    static {
-        try {
-            REGISTRY = LocateRegistry.getRegistry(1099);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public User() {
         initRemoteServerObject();
@@ -35,7 +23,8 @@ public class User implements Serializable {
     private static void initRemoteServerObject() {
         try {
             if (SERVER == null)
-                SERVER = (RMIServer) REGISTRY.lookup("RMIServer");
+                SERVER = (RMIServer) LocateRegistry.getRegistry(1099)
+                        .lookup("RMIServer");
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
@@ -52,17 +41,19 @@ public class User implements Serializable {
 
     public boolean disconnectFromServer() {
         try {
+            String remoteObjectName = "User" + id;
+            LocateRegistry.getRegistry(1099)
+                    .unbind(remoteObjectName);
             return SERVER.disconnect(this);
-        } catch (RemoteException e) {
+        } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException();
         }
     }
 
-    public User(int id, String username, String password, int age) {
+    public User(int id, String username, String password) {
         this.id = id;
         this.username = username;
         this.password = password;
-        this.age = age;
         initRemoteServerObject();
     }
 
@@ -84,17 +75,17 @@ public class User implements Serializable {
         }
     }
 
-    public List<Message> getDialog(User usr) {
+    public List<Message> getCommonDialog() {
         try {
-             return SERVER.getDialog(this, usr);
+            return SERVER.getCommonDialog(this);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<Message> getCommonDialog() {
+    public List<User> getActiveUsers() {
         try {
-            return SERVER.getCommonDialog(this);
+            return SERVER.getActiveUsers(this);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -118,24 +109,6 @@ public class User implements Serializable {
         return this;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public User setAge(int age) {
-        this.age = age;
-        return this;
-    }
-
-    public long getSessionId() {
-        return sessionId;
-    }
-
-    public User setSessionId(long sessionId) {
-        this.sessionId = sessionId;
-        return this;
-    }
-
     public String getPassword() {
         return password;
     }
@@ -150,7 +123,6 @@ public class User implements Serializable {
         return "User{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
-                ", age=" + age +
                 '}';
     }
 

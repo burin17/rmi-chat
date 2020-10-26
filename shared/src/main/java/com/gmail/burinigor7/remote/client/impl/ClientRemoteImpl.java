@@ -1,4 +1,4 @@
-package com.gmail.burinigor7.remote;
+package com.gmail.burinigor7.remote.client.impl;
 
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.remote.client.ClientRemote;
@@ -28,10 +28,5 @@ public class ClientRemoteImpl implements ClientRemote {
     public void sendMessageToUser(Message msg) {
         System.out.println("Message: " + msg.getContent() +
                 "; Sender: " + msg.getSender().getUsername());
-    }
-
-    @Override
-    public void disconnect() {
-
     }
 }

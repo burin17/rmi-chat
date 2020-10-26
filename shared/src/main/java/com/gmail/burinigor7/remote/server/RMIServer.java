@@ -14,8 +14,6 @@ public interface RMIServer extends Remote {
 
     User connect(String username, String password) throws RemoteException;
 
-    List<Message> getDialog(User usr1, User usr2) throws RemoteException;
-
     List<Message> getCommonDialog(User client) throws RemoteException;
 
     List<User> getActiveUsers(User client) throws RemoteException;
