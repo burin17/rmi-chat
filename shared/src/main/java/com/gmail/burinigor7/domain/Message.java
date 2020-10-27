@@ -4,11 +4,7 @@ import java.io.Serializable;
 
 public class Message implements Serializable {
     private static final long serialVersionUID = 555L;
-
-    private int id;
-
     private User sender;
-
     private User recipient;
     private String content;
 
@@ -19,14 +15,6 @@ public class Message implements Serializable {
     }
 
     public Message() {
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public User getSender() {
@@ -57,13 +45,11 @@ public class Message implements Serializable {
     public String toString() {
         if(recipient != null)
             return "Message{" +
-                    "id=" + id +
                     ", sender=" + sender.getId() +
                     ", recipient=" + recipient.getId() +
                     ", content='" + content + '\'' +
                     '}';
         else return "Message{" +
-                    "id=" + id +
                     ", sender=" + sender.getId() +
                     ", common message" +
                     ", content='" + content + '\'' +

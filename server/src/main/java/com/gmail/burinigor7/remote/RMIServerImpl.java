@@ -14,9 +14,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
 public class RMIServerImpl implements RMIServer {
-    private static int msgIdCounter;
     private final Registry registry;
-
     private final List<User> allUsers = new ArrayList<>();
     private final List<User> activeUsers = new ArrayList<>();
     private final List<Message> commonMessages = new ArrayList<>();
@@ -33,14 +31,14 @@ public class RMIServerImpl implements RMIServer {
     }
 
     private void initUsers() {
-        allUsers.add(new User(1, "Igor", "123"));
-        allUsers.add(new User(2, "Vasya", "123"));
-        allUsers.add(new User(3, "Pete", "123"));
+        allUsers.add(new User("Igor", "123"));
+        allUsers.add(new User("Vasya", "123"));
+        allUsers.add(new User("Pete", "123"));
     }
+
     @Override
     public void sendMessageToServer(Message msg) {
         if(isPermit(msg.getSender())) {
-            msg.setId(msgIdCounter++);
             if (activeUsers.contains(msg.getRecipient())) {
                 String remoteObjectName = "User" + msg.getRecipient().getId();
                 try {
@@ -57,7 +55,6 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public void sendCommonMessageToServer(Message msg) {
         if(isPermit(msg.getSender())) {
-            msg.setId(msgIdCounter++);
             for (User active : activeUsers) {
                 String remoteObjectName = "User" + active.getId();
                 try {
@@ -92,8 +89,8 @@ public class RMIServerImpl implements RMIServer {
             for(Message msg : commonMessages) {
                 User sender = msg.getSender();
                 res.add(new Message(
-                        new User(sender.getId(), sender.getUsername(),
-                                null),
+                        new User().setId(sender.getId())
+                        .setUsername(sender.getUsername()),
                         null, msg.getContent()));
             }
             return res;
@@ -106,7 +103,8 @@ public class RMIServerImpl implements RMIServer {
         if(isPermit(client)) {
             List<User> res = new ArrayList<>();
             for (User usr : activeUsers) {
-                res.add(new User(usr.getId(), usr.getUsername(), null));
+                res.add(new User().setId(usr.getId())
+                    .setUsername(usr.getUsername()));
             }
             return res;
         } return null;

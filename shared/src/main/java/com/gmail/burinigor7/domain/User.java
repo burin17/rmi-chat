@@ -11,6 +11,7 @@ import java.util.Objects;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
+    private static int idCounter;
     private static RMIServer SERVER;
     private int id;
     private String username;
@@ -50,8 +51,8 @@ public class User implements Serializable {
         }
     }
 
-    public User(int id, String username, String password) {
-        this.id = id;
+    public User(String username, String password) {
+        this.id = idCounter++;
         this.username = username;
         this.password = password;
         initRemoteServerObject();
