@@ -1,5 +1,6 @@
-package com.gmail.burinigor7.domain;
+package com.gmail.burinigor7.api;
 
+import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
 import java.io.Serializable;
@@ -30,10 +31,11 @@ public class User implements Serializable {
 
     public User(String username, long sessionId, String serverName) {
         try {
+            String serverRemoteObject = "RMIServer" + serverName;
             this.sessionId = sessionId;
             this.username = username;
             this.server = (RMIServer) LocateRegistry.getRegistry(1099)
-                    .lookup(serverName);
+                    .lookup(serverRemoteObject);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
@@ -41,9 +43,9 @@ public class User implements Serializable {
 
     public void sendMessage(String content, String recipient) {
         Message msg = new Message()
-                .setRecipientUsername(username)
+                .setRecipientUsername(recipient)
                 .setSenderSessionId(sessionId)
-                .setSenderUsername(recipient)
+                .setSenderUsername(username)
                 .setContent(content);
         try {
             server.sendMessageToServer(msg);

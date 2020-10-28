@@ -11,10 +11,10 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ClientRemoteImpl implements ClientRemote {
     private final Registry registry;
-    private final long id;
-    public ClientRemoteImpl(long id) {
-        this.id = id;
-        String remoteObjectName = "User" + id;
+    private final long sessionId;
+    public ClientRemoteImpl(long sessionId) {
+        this.sessionId = sessionId;
+        String remoteObjectName = "User" + sessionId;
         try {
             UnicastRemoteObject.exportObject(this, 0);
             registry = LocateRegistry.getRegistry(1099);

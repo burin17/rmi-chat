@@ -46,6 +46,7 @@ public class RMIServerImpl implements RMIServer {
             if ((recipientSessionId = activeUsers
                     .get(msg.getRecipientUsername())) != null) {
                 String remoteObjectName = "User" + recipientSessionId;
+                System.out.println(remoteObjectName);
                 try {
                     ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
                     chatUser.sendMessageToUser(msg.setSenderSessionId(null));
@@ -55,6 +56,8 @@ public class RMIServerImpl implements RMIServer {
                 System.out.println("Message from " +  msg.getSenderUsername() +
                         " to " + msg.getRecipientUsername());
             }
+        } else {
+            System.out.println("Message not send");
         }
     }
 
@@ -93,7 +96,7 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public Set<String> getActiveUsers(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            return activeUsers.keySet();
+            return new HashSet<>(activeUsers.keySet());
         } return null;
     }
 

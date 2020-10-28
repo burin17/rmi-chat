@@ -1,6 +1,7 @@
 package com.gmail.burinigor7.util;
 
-import com.gmail.burinigor7.domain.User;
+import com.gmail.burinigor7.api.User;
+import com.gmail.burinigor7.remote.ClientRemoteImpl;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
 import java.rmi.NotBoundException;
@@ -36,6 +37,7 @@ public class ServerConnector {
             String remoteObjectName = "RMIServer" + serverName;
             RMIServer server = (RMIServer) registry.lookup(remoteObjectName);
             long sessionId = server.connect(username);
+            new ClientRemoteImpl(sessionId);
             return new User(username, sessionId, serverName);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
