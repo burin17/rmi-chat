@@ -1,22 +1,22 @@
 package com.gmail.burinigor7.remote.server;
 
 import com.gmail.burinigor7.domain.Message;
-import com.gmail.burinigor7.domain.User;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Set;
 
 public interface RMIServer extends Remote {
     void sendMessageToServer(Message msg) throws RemoteException;
 
     void sendCommonMessageToServer(Message msg) throws RemoteException;
 
-    User connect(String username, String password) throws RemoteException;
+    long connect(String username) throws RemoteException;
 
-    List<Message> getCommonDialog(User client) throws RemoteException;
+    List<Message> getCommonDialog(String username, long sessionId) throws RemoteException;
 
-    List<User> getActiveUsers(User client) throws RemoteException;
+    Set<String> getActiveUsers(String username, long sessionId) throws RemoteException;
 
-    boolean disconnect(User client) throws RemoteException;
+    boolean disconnect(String username, long sessionId) throws RemoteException;
 }

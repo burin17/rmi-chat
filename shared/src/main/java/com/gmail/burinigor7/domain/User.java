@@ -8,69 +8,57 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
     private static int idCounter;
-    private static RMIServer SERVER;
-    private int id;
+    private final RMIServer server;
+    private long sessionId;
     private String username;
-    private String password;
-
-    public User() {
-        initRemoteServerObject();
-    }
-
-    private static void initRemoteServerObject() {
-        try {
-            if (SERVER == null)
-                SERVER = (RMIServer) LocateRegistry.getRegistry(1099)
-                        .lookup("RMIServer");
-        } catch (RemoteException | NotBoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static User connectToServer(String username, String password) {
-        try {
-            initRemoteServerObject();
-            return SERVER.connect(username, password);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public boolean disconnectFromServer() {
         try {
-            String remoteObjectName = "User" + id;
+            String remoteObjectName = "User" + sessionId;
             LocateRegistry.getRegistry(1099)
                     .unbind(remoteObjectName);
-            return SERVER.disconnect(this);
+            return server.disconnect(username, sessionId);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException();
         }
     }
 
-    public User(String username, String password) {
-        this.id = idCounter++;
-        this.username = username;
-        this.password = password;
-        initRemoteServerObject();
+    public User(String username, long sessionId, String serverName) {
+        try {
+            this.sessionId = sessionId;
+            this.username = username;
+            this.server = (RMIServer) LocateRegistry.getRegistry(1099)
+                    .lookup(serverName);
+        } catch (RemoteException | NotBoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void sendMessage(String content, User recipient) {
-        Message msg = new Message(this, recipient, content);
+    public void sendMessage(String content, String recipient) {
+        Message msg = new Message()
+                .setRecipientUsername(username)
+                .setSenderSessionId(sessionId)
+                .setSenderUsername(recipient)
+                .setContent(content);
         try {
-            SERVER.sendMessageToServer(msg);
+            server.sendMessageToServer(msg);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void sendCommonMessage(String content) {
-        Message msg = new Message(this, null, content);
+        Message msg = new Message()
+                .setSenderUsername(username)
+                .setSenderSessionId(sessionId)
+                .setContent(content);
         try {
-            SERVER.sendCommonMessageToServer(msg);
+            server.sendCommonMessageToServer(msg);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -78,27 +66,18 @@ public class User implements Serializable {
 
     public List<Message> getCommonDialog() {
         try {
-            return SERVER.getCommonDialog(this);
+            return server.getCommonDialog(username, sessionId);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<User> getActiveUsers() {
+    public Set<String> getActiveUsers() {
         try {
-            return SERVER.getActiveUsers(this);
+            return server.getActiveUsers(username, sessionId);
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public User setId(int id) {
-        this.id = id;
-        return this;
     }
 
     public String getUsername() {
@@ -110,19 +89,18 @@ public class User implements Serializable {
         return this;
     }
 
-    public String getPassword() {
-        return password;
+    public long getSessionId() {
+        return sessionId;
     }
 
-    public User setPassword(String password) {
-        this.password = password;
-        return this;
+    public void setSessionId(long sessionId) {
+        this.sessionId = sessionId;
     }
 
     @Override
     public String toString() {
         return "User{" +
-                "id=" + id +
+                "sessionId=" + sessionId +
                 ", username='" + username + '\'' +
                 '}';
     }
@@ -132,11 +110,12 @@ public class User implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return id == user.id;
+        return sessionId == user.sessionId &&
+                username.equals(user.username);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(sessionId, username);
     }
 }

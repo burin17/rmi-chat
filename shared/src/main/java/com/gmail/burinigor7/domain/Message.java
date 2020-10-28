@@ -4,55 +4,57 @@ import java.io.Serializable;
 
 public class Message implements Serializable {
     private static final long serialVersionUID = 555L;
-    private User sender;
-    private User recipient;
+    private String senderUsername;
+    private Long senderSessionId;
+    private String recipientUsername;
     private String content;
-
-    public Message(User sender, User recipient, String content) {
-        this.sender = sender;
-        this.recipient = recipient;
-        this.content = content;
-    }
 
     public Message() {
     }
 
-    public User getSender() {
-        return sender;
+    public String getSenderUsername() {
+        return senderUsername;
     }
 
-    public void setSender(User sender) {
-        this.sender = sender;
+    public Message setSenderUsername(String senderUsername) {
+        this.senderUsername = senderUsername;
+        return this;
     }
 
-    public User getRecipient() {
-        return recipient;
+    public Long getSenderSessionId() {
+        return senderSessionId;
     }
 
-    public void setRecipient(User recipient) {
-        this.recipient = recipient;
+    public Message setSenderSessionId(Long senderSessionId) {
+        this.senderSessionId = senderSessionId;
+        return this;
+    }
+
+    public String getRecipientUsername() {
+        return recipientUsername;
+    }
+
+    public Message setRecipientUsername(String recipientUsername) {
+        this.recipientUsername = recipientUsername;
+        return this;
     }
 
     public String getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public Message setContent(String content) {
         this.content = content;
+        return this;
     }
 
     @Override
     public String toString() {
-        if(recipient != null)
-            return "Message{" +
-                    ", sender=" + sender.getId() +
-                    ", recipient=" + recipient.getId() +
-                    ", content='" + content + '\'' +
-                    '}';
-        else return "Message{" +
-                    ", sender=" + sender.getId() +
-                    ", common message" +
-                    ", content='" + content + '\'' +
-                    '}';
+        return "Message{" +
+                "senderUsername='" + senderUsername + '\'' +
+                ", senderSessionId=" + senderSessionId +
+                ", recipientUsername='" + recipientUsername + '\'' +
+                ", content='" + content + '\'' +
+                '}';
     }
 }

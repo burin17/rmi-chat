@@ -1,4 +1,4 @@
-package com.gmail.burinigor7.remote.client.impl;
+package com.gmail.burinigor7.remote;
 
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.remote.client.ClientRemote;
@@ -11,10 +11,10 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ClientRemoteImpl implements ClientRemote {
     private final Registry registry;
-    private final long sessionId;
-    public ClientRemoteImpl(long sessionId) {
-        this.sessionId = sessionId;
-        String remoteObjectName = "User" + sessionId;
+    private final long id;
+    public ClientRemoteImpl(long id) {
+        this.id = id;
+        String remoteObjectName = "User" + id;
         try {
             UnicastRemoteObject.exportObject(this, 0);
             registry = LocateRegistry.getRegistry(1099);
@@ -27,6 +27,6 @@ public class ClientRemoteImpl implements ClientRemote {
     @Override
     public void sendMessageToUser(Message msg) {
         System.out.println("Message: " + msg.getContent() +
-                "; Sender: " + msg.getSender().getUsername());
+                "; Sender: " + msg.getSenderUsername());
     }
 }
