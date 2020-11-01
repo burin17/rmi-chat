@@ -16,6 +16,8 @@ public class RMIServerImpl implements RMIServer {
     private Registry registry = null;
     private final Map<String, Long> activeUsers = new HashMap<>();
     private final List<Message> commonMessages = new ArrayList<>();
+    private final Map<String, Map<String, List<Message>>> messageStorage =
+            new HashMap<>();
 
     public RMIServerImpl(String serverName) {
         String serverRemoteObjectName = "RMIServer" + serverName;
@@ -44,10 +46,17 @@ public class RMIServerImpl implements RMIServer {
             if ((recipientSessionId = activeUsers
                     .get(msg.getRecipientUsername())) != null) {
                 String remoteObjectName = "User" + recipientSessionId;
-                System.out.println(remoteObjectName);
                 try {
                     ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
                     chatUser.sendMessageToUser(msg.setSenderSessionId(null));
+                    messageStorage.get(msg.getSenderUsername())
+                            .computeIfAbsent(msg.getRecipientUsername(), k -> new ArrayList<>());
+                    messageStorage.get(msg.getRecipientUsername())
+                            .computeIfAbsent(msg.getSenderUsername(), k -> new ArrayList<>());
+                    messageStorage.get(msg.getSenderUsername()).get(msg.getRecipientUsername())
+                            .add(msg);
+                    messageStorage.get(msg.getRecipientUsername()).get(msg.getSenderUsername())
+                            .add(msg);
                 } catch (RemoteException | NotBoundException e) {
                     throw new RuntimeException(e);
                 }
@@ -57,6 +66,13 @@ public class RMIServerImpl implements RMIServer {
         } else {
             System.out.println("Message not send");
         }
+    }
+
+    @Override
+    public List<Message> getDialog(String authUser, String otherUser, long sessionId) {
+        if(isPermit(authUser, sessionId))
+            return new ArrayList<>(messageStorage.get(authUser).get(otherUser));
+        return null;
     }
 
     @Override
@@ -80,13 +96,26 @@ public class RMIServerImpl implements RMIServer {
     public long connect(String username) {
         long sessionId = new Random().nextLong();
         activeUsers.put(username, sessionId);
+        messageStorage.put(username, new HashMap<>());
+        for (Long session : activeUsers.values()) {
+            if(sessionId != session) {
+                String remoteObjectName = "User" + session;
+                try {
+                    ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
+                    chatUser.refreshAvailableDialogsList();
+                } catch (RemoteException | NotBoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
         return sessionId;
     }
 
     @Override
     public List<Message> getCommonDialog(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            return commonMessages;
+            return new ArrayList<>(commonMessages);
         }
         return null;
     }
@@ -94,7 +123,9 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public Set<String> getActiveUsers(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            return new HashSet<>(activeUsers.keySet());
+            Set<String> res = new HashSet<>(activeUsers.keySet());
+            res.add("Common dialog");
+            return res;
         } return null;
     }
 

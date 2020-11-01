@@ -1,22 +1,21 @@
 package com.gmail.burinigor7.api;
 
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.remote.client.ClientRemote;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
 import java.io.Serializable;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 777L;
-    private static int idCounter;
     private final RMIServer server;
     private long sessionId;
     private String username;
+    private ClientRemote clientRemote;
 
     public boolean disconnectFromServer() {
         try {
@@ -68,7 +67,7 @@ public class User implements Serializable {
 
     public List<Message> getCommonDialog() {
         try {
-            return server.getCommonDialog(username, sessionId);
+            return new ArrayList<>(server.getCommonDialog(username, sessionId));
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -76,7 +75,7 @@ public class User implements Serializable {
 
     public Set<String> getActiveUsers() {
         try {
-            return server.getActiveUsers(username, sessionId);
+            return new HashSet<>(server.getActiveUsers(username, sessionId));
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }
@@ -119,5 +118,9 @@ public class User implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(sessionId, username);
+    }
+
+    public RMIServer getServer() {
+        return server;
     }
 }

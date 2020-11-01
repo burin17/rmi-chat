@@ -7,4 +7,5 @@ import java.rmi.RemoteException;
 
 public interface ClientRemote extends Remote {
     void sendMessageToUser(Message msg) throws RemoteException;
+    void refreshAvailableDialogsList() throws RemoteException;
 }

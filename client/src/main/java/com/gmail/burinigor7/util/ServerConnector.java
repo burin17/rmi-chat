@@ -38,7 +38,6 @@ public class ServerConnector {
             String remoteObjectName = "RMIServer" + serverName;
             RMIServer server = (RMIServer) registry.lookup(remoteObjectName);
             long sessionId = server.connect(username);
-            new ClientRemoteImpl(sessionId);
             return new User(username, sessionId, serverName);
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);

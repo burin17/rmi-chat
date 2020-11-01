@@ -1,6 +1,6 @@
 package com.gmail.burinigor7.gui;
 
-import com.gmail.burinigor7.api.User;
+import com.gmail.burinigor7.remote.ClientRemoteImpl;
 import com.gmail.burinigor7.util.ServerConnector;
 
 import javax.swing.*;
@@ -46,7 +46,8 @@ public class AvailableServers extends JFrame {
                 } else if(username.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Type the username!");
                 } else {
-                    User user = ServerConnector.connectToServer(username, serverName);
+                    dispose();
+                    new ClientRemoteImpl(new UserForm(ServerConnector.connectToServer(username, serverName), serverName));
                 }
             }
         });
@@ -63,5 +64,6 @@ public class AvailableServers extends JFrame {
             serversModel.addElement(name);
         }
         serversList.setModel(serversModel);
+        setTitle("Connection to server");
     }
 }

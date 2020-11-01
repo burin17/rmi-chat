@@ -12,6 +12,9 @@ public interface RMIServer extends Remote {
 
     void sendCommonMessageToServer(Message msg) throws RemoteException;
 
+    List<Message> getDialog(String authUser, String otherUser, long sessionId)
+            throws RemoteException;
+
     long connect(String username) throws RemoteException;
 
     List<Message> getCommonDialog(String username, long sessionId) throws RemoteException;
