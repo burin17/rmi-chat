@@ -28,10 +28,10 @@ public class UserForm extends JFrame {
     private JLabel messageLabel;
     private JPanel dialogsListPanel;
     private JLabel availableDialogsLabel;
-    private JPanel chatContentPanel;
     private JLabel chatLabel;
     private JLabel serverInfoLabel;
     private JLabel userInfoLabel;
+    private JScrollPane chatContentPanel;
     private final String serverName;
 
     public UserForm(User user, String serverName) {
@@ -104,7 +104,8 @@ public class UserForm extends JFrame {
         return dialogsList;
     }
 
-    private void refreshChat() {
+    public void refreshChat() {
+        System.out.println("refreshChat");
         List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
         StringBuilder dialog = new StringBuilder();
         for(Message message : messagesForDialogArea) {
@@ -116,4 +117,5 @@ public class UserForm extends JFrame {
         }
         chat.setText(dialog.toString());
     }
+
 }

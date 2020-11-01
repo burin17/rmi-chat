@@ -63,6 +63,7 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public void sendCommonMessageToServer(Message msg) {
         if(isPermit(msg.getSenderUsername(), msg.getSenderSessionId())) {
+            commonMessages.add(msg);
             for (Long sessionId : activeUsers.values()) {
                 String remoteObjectName = "User" + sessionId;
                 try {
@@ -73,7 +74,6 @@ public class RMIServerImpl implements RMIServer {
                 }
             }
             System.out.println("Common message from " + msg.getSenderUsername());
-            commonMessages.add(msg);
         }
     }
 

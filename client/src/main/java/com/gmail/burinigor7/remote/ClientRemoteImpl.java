@@ -1,5 +1,6 @@
 package com.gmail.burinigor7.remote;
 
+import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.gui.UserForm;
 import com.gmail.burinigor7.remote.client.ClientRemote;
@@ -33,6 +34,13 @@ public class ClientRemoteImpl implements ClientRemote {
     public void sendMessageToUser(Message msg) {
         userForm.getUser().addMessage(msg.getContent(),
                 msg.getRecipientUsername());
+        String recipientSelected = userForm.getDialogsList().getSelectedValue();
+        if(recipientSelected != null && ((msg.getRecipientUsername() == null
+                && userForm.getDialogsList().getSelectedValue()
+                .equals(User.COMMON_DIALOG_KEY)) || msg.getRecipientUsername()
+                .equals(userForm.getUser().getUsername()))) {
+            userForm.refreshChat();
+        }
         System.out.println("Message: " + msg.getContent() +
                 "; Sender: " + msg.getSenderUsername());
     }

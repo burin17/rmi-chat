@@ -11,7 +11,7 @@ import java.rmi.registry.LocateRegistry;
 import java.util.*;
 
 public class User implements Serializable {
-    private static final String COMMON_DIALOG_KEY = "Common dialog";
+    public static final String COMMON_DIALOG_KEY = "Common dialog";
     private static final long serialVersionUID = 777L;
     private final RMIServer server;
     private long sessionId;
@@ -57,20 +57,22 @@ public class User implements Serializable {
     }
 
     public void sendMessage(String content, String recipient) {
-        if(!recipient.equals(COMMON_DIALOG_KEY)) {
-            Message msg = new Message()
-                    .setRecipientUsername(recipient)
-                    .setSenderSessionId(sessionId)
-                    .setSenderUsername(username)
-                    .setContent(content);
-            try {
-                server.sendMessageToServer(msg);
-            } catch (RemoteException e) {
-                throw new RuntimeException(e);
+        if(recipient != null) {
+            if (!recipient.equals(COMMON_DIALOG_KEY)) {
+                Message msg = new Message()
+                        .setRecipientUsername(recipient)
+                        .setSenderSessionId(sessionId)
+                        .setSenderUsername(username)
+                        .setContent(content);
+                try {
+                    server.sendMessageToServer(msg);
+                } catch (RemoteException e) {
+                    throw new RuntimeException(e);
+                }
+                addMessage(content, recipient);
+            } else {
+                sendCommonMessage(content);
             }
-            addMessage(content, recipient);
-        } else {
-            sendCommonMessage(content);
         }
     }
 
@@ -146,15 +148,17 @@ public class User implements Serializable {
     }
 
     public List<Message> getDialog(String dialogName) {
-        if(!dialogName.equals(COMMON_DIALOG_KEY)) {
-            messagesStorage.putIfAbsent(dialogName, new ArrayList<>());
-            return messagesStorage.get(dialogName);
+        if(dialogName != null) {
+            if (!dialogName.equals(COMMON_DIALOG_KEY)) {
+                messagesStorage.putIfAbsent(dialogName, new ArrayList<>());
+                return messagesStorage.get(dialogName);
+            }
+            try {
+                return server.getCommonDialog(username, sessionId);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
         }
-        try {
-            return server.getCommonDialog(username, sessionId);
-        }
-        catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
+        return new ArrayList<>();
     }
 }
