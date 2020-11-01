@@ -32,14 +32,24 @@ public class User implements Serializable {
         }
     }
 
-    public void addMessage(String content, String recipient) {
+
+    public void addSentMessage(String content, String recipient) {
         Message msg = new Message()
                 .setContent(content)
                 .setSenderUsername(username)
                 .setSenderSessionId(sessionId)
                 .setRecipientUsername(recipient);
-        messagesStorage.putIfAbsent(msg.getSenderUsername(), new ArrayList<>());
-        messagesStorage.get(msg.getSenderUsername()).add(msg);
+        messagesStorage.putIfAbsent(recipient, new ArrayList<>());
+        messagesStorage.get(recipient).add(msg);
+    }
+    public void addObtainedMessage(String content, String sender) {
+        Message msg = new Message()
+                .setContent(content)
+                .setSenderUsername(sender)
+                .setSenderSessionId(sessionId)
+                .setRecipientUsername(username);
+        messagesStorage.putIfAbsent(sender, new ArrayList<>());
+        messagesStorage.get(sender).add(msg);
     }
 
     public User(String username, long sessionId, String serverName) {
@@ -58,6 +68,7 @@ public class User implements Serializable {
 
     public void sendMessage(String content, String recipient) {
         if(recipient != null) {
+            System.out.println("User.sendMessage()");
             if (!recipient.equals(COMMON_DIALOG_KEY)) {
                 Message msg = new Message()
                         .setRecipientUsername(recipient)
@@ -69,7 +80,7 @@ public class User implements Serializable {
                 } catch (RemoteException e) {
                     throw new RuntimeException(e);
                 }
-                addMessage(content, recipient);
+                addSentMessage(content, recipient);
             } else {
                 sendCommonMessage(content);
             }

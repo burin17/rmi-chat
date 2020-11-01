@@ -105,8 +105,8 @@ public class UserForm extends JFrame {
     }
 
     public void refreshChat() {
-        System.out.println("refreshChat");
         List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
+        System.out.println(messagesForDialogArea);
         StringBuilder dialog = new StringBuilder();
         for(Message message : messagesForDialogArea) {
             if(message.getSenderUsername().equals(user.getUsername()))
@@ -117,5 +117,4 @@ public class UserForm extends JFrame {
         }
         chat.setText(dialog.toString());
     }
-
 }

@@ -32,13 +32,13 @@ public class ClientRemoteImpl implements ClientRemote {
 
     @Override
     public void sendMessageToUser(Message msg) {
-        userForm.getUser().addMessage(msg.getContent(),
-                msg.getRecipientUsername());
+        userForm.getUser().addObtainedMessage(msg.getContent(),
+                msg.getSenderUsername());
         String recipientSelected = userForm.getDialogsList().getSelectedValue();
         if(recipientSelected != null && ((msg.getRecipientUsername() == null
                 && userForm.getDialogsList().getSelectedValue()
-                .equals(User.COMMON_DIALOG_KEY)) || msg.getRecipientUsername()
-                .equals(userForm.getUser().getUsername()))) {
+                .equals(User.COMMON_DIALOG_KEY)) || userForm.getUser().getUsername()
+                .equals(msg.getRecipientUsername()))) {
             userForm.refreshChat();
         }
         System.out.println("Message: " + msg.getContent() +
