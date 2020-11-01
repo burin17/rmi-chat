@@ -53,33 +53,14 @@ public class UserForm extends JFrame {
         dialogsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-
+                refreshChat();
             }
         });
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                try {
-                    Message msg = new Message()
-                            .setContent(messageTextField.getText())
-                            .setSenderUsername(user.getUsername())
-                            .setSenderSessionId(user.getSessionId())
-                            .setRecipientUsername(dialogsList.getSelectedValue());
-                    user.getServer().sendMessageToServer(msg);
-                    List<Message> messagesForDialogArea = user.getServer()
-                            .getDialog(user.getUsername(), dialogsList.getSelectedValue(), user.getSessionId());
-                    StringBuilder dialog = new StringBuilder();
-                    for(Message message : messagesForDialogArea) {
-                        if(message.getSenderUsername().equals(user.getUsername()))
-                            dialog.append("You: ").append(message.getContent())
-                                    .append('\n');
-                        else dialog.append(message.getSenderUsername())
-                                .append(message.getContent()).append('\n');
-                    }
-                    chat.setText(dialog.toString());
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
+                user.sendMessage(messageTextField.getText(), dialogsList.getSelectedValue());
+                refreshChat();
             }
         });
     }
@@ -121,5 +102,18 @@ public class UserForm extends JFrame {
 
     public JList<String> getDialogsList() {
         return dialogsList;
+    }
+
+    private void refreshChat() {
+        List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
+        StringBuilder dialog = new StringBuilder();
+        for(Message message : messagesForDialogArea) {
+            if(message.getSenderUsername().equals(user.getUsername()))
+                dialog.append("You: ").append(message.getContent())
+                        .append('\n');
+            else dialog.append(message.getSenderUsername()).append(": ")
+                    .append(message.getContent()).append('\n');
+        }
+        chat.setText(dialog.toString());
     }
 }

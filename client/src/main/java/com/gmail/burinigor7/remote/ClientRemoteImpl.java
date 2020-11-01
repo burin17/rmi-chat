@@ -31,6 +31,8 @@ public class ClientRemoteImpl implements ClientRemote {
 
     @Override
     public void sendMessageToUser(Message msg) {
+        userForm.getUser().addMessage(msg.getContent(),
+                msg.getRecipientUsername());
         System.out.println("Message: " + msg.getContent() +
                 "; Sender: " + msg.getSenderUsername());
     }

@@ -11,11 +11,15 @@ import java.rmi.registry.LocateRegistry;
 import java.util.*;
 
 public class User implements Serializable {
+    private static final String COMMON_DIALOG_KEY = "Common dialog";
     private static final long serialVersionUID = 777L;
     private final RMIServer server;
     private long sessionId;
     private String username;
     private ClientRemote clientRemote;
+    private final Map<String, List<Message>> messagesStorage = new HashMap<>() {{
+        put(COMMON_DIALOG_KEY, new ArrayList<>());
+    }};
 
     public boolean disconnectFromServer() {
         try {
@@ -28,6 +32,16 @@ public class User implements Serializable {
         }
     }
 
+    public void addMessage(String content, String recipient) {
+        Message msg = new Message()
+                .setContent(content)
+                .setSenderUsername(username)
+                .setSenderSessionId(sessionId)
+                .setRecipientUsername(recipient);
+        messagesStorage.putIfAbsent(msg.getSenderUsername(), new ArrayList<>());
+        messagesStorage.get(msg.getSenderUsername()).add(msg);
+    }
+
     public User(String username, long sessionId, String serverName) {
         try {
             String serverRemoteObject = "RMIServer" + serverName;
@@ -35,21 +49,28 @@ public class User implements Serializable {
             this.username = username;
             this.server = (RMIServer) LocateRegistry.getRegistry(1099)
                     .lookup(serverRemoteObject);
+            messagesStorage.get(COMMON_DIALOG_KEY)
+                    .addAll(server.getCommonDialog(username, sessionId));
         } catch (RemoteException | NotBoundException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void sendMessage(String content, String recipient) {
-        Message msg = new Message()
-                .setRecipientUsername(recipient)
-                .setSenderSessionId(sessionId)
-                .setSenderUsername(username)
-                .setContent(content);
-        try {
-            server.sendMessageToServer(msg);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
+        if(!recipient.equals(COMMON_DIALOG_KEY)) {
+            Message msg = new Message()
+                    .setRecipientUsername(recipient)
+                    .setSenderSessionId(sessionId)
+                    .setSenderUsername(username)
+                    .setContent(content);
+            try {
+                server.sendMessageToServer(msg);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+            addMessage(content, recipient);
+        } else {
+            sendCommonMessage(content);
         }
     }
 
@@ -122,5 +143,18 @@ public class User implements Serializable {
 
     public RMIServer getServer() {
         return server;
+    }
+
+    public List<Message> getDialog(String dialogName) {
+        if(!dialogName.equals(COMMON_DIALOG_KEY)) {
+            messagesStorage.putIfAbsent(dialogName, new ArrayList<>());
+            return messagesStorage.get(dialogName);
+        }
+        try {
+            return server.getCommonDialog(username, sessionId);
+        }
+        catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
