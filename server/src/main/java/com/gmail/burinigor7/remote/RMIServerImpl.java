@@ -9,7 +9,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
@@ -22,8 +21,7 @@ public class RMIServerImpl implements RMIServer {
         String serverRemoteObjectName = "RMIServer" + serverName;
         try {
             registry = LocateRegistry.createRegistry(1099);
-        } catch (RemoteException ignore) {
-        }
+        } catch (RemoteException ignore) {}
         if(registry == null) {
             try {
                 registry = LocateRegistry.getRegistry(1099);
@@ -107,6 +105,11 @@ public class RMIServerImpl implements RMIServer {
             return true;
         }
         return false;
+    }
+
+    public boolean disconnect(String username) {
+        Long value = activeUsers.remove(username);
+        return value != null;
     }
 
     private boolean isPermit(String senderUsername, long senderSessionId) {

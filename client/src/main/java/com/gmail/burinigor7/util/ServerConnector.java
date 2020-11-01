@@ -26,6 +26,7 @@ public class ServerConnector {
             Registry registry = LocateRegistry.getRegistry(1099);
             return Arrays.stream(registry.list())
                     .filter(remote -> remote.contains("RMIServer"))
+                    .map(name -> name.replace("RMIServer", ""))
                     .collect(Collectors.toList());
         } catch (RemoteException e) {
             throw new RuntimeException(e);
