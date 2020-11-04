@@ -1,6 +1,7 @@
 package com.gmail.burinigor7.remote;
 
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
@@ -58,8 +59,6 @@ public class RMIServerImpl implements RMIServer {
         }
     }
 
-
-
     @Override
     public void sendCommonMessageToServer(Message msg) {
         if(isPermit(msg.getSenderUsername(), msg.getSenderSessionId())) {
@@ -78,9 +77,16 @@ public class RMIServerImpl implements RMIServer {
     }
 
     @Override
-    public long connect(String username) {
+    public long connect(String username) throws UsernameInUseException {
+        if(activeUsers.containsKey(username))
+            throw new UsernameInUseException();
         long sessionId = new Random().nextLong();
         activeUsers.put(username, sessionId);
+        refreshUserListForAll(sessionId);
+        return sessionId;
+    }
+
+    private void refreshUserListForAll(long sessionId) {
         for (Long session : activeUsers.values()) {
             if(sessionId != session) {
                 String remoteObjectName = "User" + session;
@@ -92,8 +98,6 @@ public class RMIServerImpl implements RMIServer {
                 }
             }
         }
-
-        return sessionId;
     }
 
     @Override
@@ -117,6 +121,7 @@ public class RMIServerImpl implements RMIServer {
     public boolean disconnect(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
             activeUsers.remove(username);
+            refreshUserListForAll(sessionId);
             return true;
         }
         return false;

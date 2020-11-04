@@ -41,13 +41,9 @@ public class UserForm extends JFrame {
         leaveServerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                try {
-                    user.getServer().disconnect(user.getUsername(), user.getSessionId());
-                    dispose();
-                    new AvailableServers();
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
+                user.disconnectFromServer();
+                dispose();
+                new AvailableServers();
             }
         });
         dialogsList.addMouseListener(new MouseAdapter() {

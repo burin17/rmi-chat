@@ -1,7 +1,9 @@
 package com.gmail.burinigor7.util;
 
 import com.gmail.burinigor7.api.User;
-import com.gmail.burinigor7.remote.ClientRemoteImpl;
+import com.gmail.burinigor7.exception.ServersUnavailableException;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailable;
+import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
 import java.rmi.NotBoundException;
@@ -13,34 +15,45 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ServerConnector {
-    private static final Registry registry;
-    static {
+    private static Registry registry;
+
+    private static void initRegistry() throws ServersUnavailableException {
         try {
-            registry = LocateRegistry.getRegistry(1099);
+            if(registry == null)
+                registry = LocateRegistry.getRegistry(1099);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            throw new ServersUnavailableException(e);
         }
     }
-    public static List<String> availableServers() {
+
+    public static List<String> availableServers() throws ServersUnavailableException {
+        initRegistry();
         try {
-            Registry registry = LocateRegistry.getRegistry(1099);
             return Arrays.stream(registry.list())
                     .filter(remote -> remote.contains("RMIServer"))
                     .map(name -> name.replace("RMIServer", ""))
                     .collect(Collectors.toList());
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            throw new ServersUnavailableException(e);
         }
+//        throw new ServersUnavailableException(null);
     }
 
-    public static User connectToServer(String username, String serverName) {
+    public static User connectToServer(String username, String serverName)
+            throws ServersUnavailableException, SpecifiedServerUnavailable {
+        initRegistry();
         try {
             String remoteObjectName = "RMIServer" + serverName;
             RMIServer server = (RMIServer) registry.lookup(remoteObjectName);
-            long sessionId = server.connect(username);
-            return new User(username, sessionId, serverName);
+            try {
+                long sessionId = server.connect(username);
+                return new User(username, sessionId, serverName);
+            } catch (UsernameInUseException e) {
+                return null;
+            }
         } catch (RemoteException | NotBoundException e) {
-            throw new RuntimeException(e);
+            throw new SpecifiedServerUnavailable(e);
         }
+//        throw new ServersUnavailableException(null);
     }
 }

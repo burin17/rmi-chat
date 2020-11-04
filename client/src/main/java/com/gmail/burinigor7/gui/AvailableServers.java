@@ -1,5 +1,8 @@
 package com.gmail.burinigor7.gui;
 
+import com.gmail.burinigor7.api.User;
+import com.gmail.burinigor7.exception.ServersUnavailableException;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailable;
 import com.gmail.burinigor7.remote.ClientRemoteImpl;
 import com.gmail.burinigor7.util.ServerConnector;
 
@@ -27,13 +30,17 @@ public class AvailableServers extends JFrame {
         init();
         refreshButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                List<String> serversNames = ServerConnector.availableServers();
-                serversModel = new DefaultListModel<>();
-                for(String name : serversNames) {
-                    serversModel.addElement(name);
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    List<String> serversNames = ServerConnector.availableServers();
+                    serversModel = new DefaultListModel<>();
+                    for (String name : serversNames) {
+                        serversModel.addElement(name);
+                    }
+                    serversList.setModel(serversModel);
+                } catch (ServersUnavailableException e) {
+                    JOptionPane.showMessageDialog(null, "No available servers for now");
                 }
-                serversList.setModel(serversModel);
             }
         });
         connectButton.addActionListener(new ActionListener() {
@@ -46,8 +53,18 @@ public class AvailableServers extends JFrame {
                 } else if(username.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Type the username!");
                 } else {
-                    dispose();
-                    new ClientRemoteImpl(new UserForm(ServerConnector.connectToServer(username, serverName), serverName));
+                    try {
+                        User user = ServerConnector.connectToServer(username, serverName);
+                        if (user != null) {
+                            dispose();
+                            new ClientRemoteImpl(new UserForm(user, serverName));
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Typed username already in use!");
+                        }
+                    } catch (SpecifiedServerUnavailable | ServersUnavailableException e2) {
+                        refreshButton.doClick();
+                        JOptionPane.showMessageDialog(null, "Specified server unavailable");
+                    }
                 }
             }
         });
@@ -59,11 +76,15 @@ public class AvailableServers extends JFrame {
         pack();
         setVisible(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        List<String> serversNames = ServerConnector.availableServers();
-        for(String name : serversNames) {
-            serversModel.addElement(name);
+        try {
+            List<String> serversNames = ServerConnector.availableServers();
+            for(String name : serversNames) {
+                serversModel.addElement(name);
+            }
+            serversList.setModel(serversModel);
+            setTitle("Connection to server");
+        } catch (ServersUnavailableException e) {
+            JOptionPane.showMessageDialog(null, "No available servers for now");
         }
-        serversList.setModel(serversModel);
-        setTitle("Connection to server");
     }
 }
