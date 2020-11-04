@@ -70,6 +70,7 @@ public class User implements Serializable {
 
     public void sendMessage(String content, String recipient)
             throws SpecifiedServerUnavailableException {
+
         if(recipient != null) {
             if (!recipient.equals(COMMON_DIALOG_KEY)) {
                 Message msg = new Message()
@@ -101,7 +102,6 @@ public class User implements Serializable {
             throw new SpecifiedServerUnavailableException(e);
         }
     }
-
 
     public Set<String> getActiveUsers()
             throws SpecifiedServerUnavailableException{

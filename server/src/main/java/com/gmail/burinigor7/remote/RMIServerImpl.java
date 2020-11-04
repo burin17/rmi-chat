@@ -112,7 +112,7 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public Set<String> getActiveUsers(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            Set<String> res = activeUsers.keySet();
+            Set<String> res = new HashSet<>(activeUsers.keySet());
             res.add("Common dialog");
             return res;
         } return null;

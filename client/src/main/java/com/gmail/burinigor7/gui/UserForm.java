@@ -3,6 +3,7 @@ package com.gmail.burinigor7.gui;
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
+import com.gmail.burinigor7.util.MessageSenderThread;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -56,12 +57,8 @@ public class UserForm extends JFrame {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                try {
-                    user.sendMessage(messageTextField.getText(), dialogsList.getSelectedValue());
-                    refreshChat();
-                } catch (SpecifiedServerUnavailableException e) {
-                    serverUnavailable();
-                }
+                new MessageSenderThread(UserForm.this,
+                        messageTextField.getText(), dialogsList.getSelectedValue()).start();
             }
         });
     }
