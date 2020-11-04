@@ -27,11 +27,11 @@ public class AvailableServers extends JFrame {
     private DefaultListModel<String> serversModel = new DefaultListModel<>();
 
     public AvailableServers() {
-        init();
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
+                    System.out.println("here");
                     List<String> serversNames = ServerConnector.availableServers();
                     serversModel = new DefaultListModel<>();
                     for (String name : serversNames) {
@@ -39,6 +39,7 @@ public class AvailableServers extends JFrame {
                     }
                     serversList.setModel(serversModel);
                 } catch (ServersUnavailableException e) {
+                    serversList.setModel(new DefaultListModel<>());
                     JOptionPane.showMessageDialog(null, "No available servers for now");
                 }
             }
@@ -62,12 +63,13 @@ public class AvailableServers extends JFrame {
                             JOptionPane.showMessageDialog(null, "Typed username already in use!");
                         }
                     } catch (SpecifiedServerUnavailableException | ServersUnavailableException e2) {
-                        refreshButton.doClick();
                         JOptionPane.showMessageDialog(null, "Specified server unavailable");
+                        refreshButton.doClick();
                     }
                 }
             }
         });
+        init();
     }
 
     private void init() {
@@ -76,18 +78,7 @@ public class AvailableServers extends JFrame {
         pack();
         setVisible(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        try {
-            List<String> serversNames = ServerConnector.availableServers();
-            if(serversNames.size() == 0) {
-                JOptionPane.showMessageDialog(null, "No available servers for now");
-            } else
-                for (String name : serversNames) {
-                    serversModel.addElement(name);
-                }
-            serversList.setModel(serversModel);
-            setTitle("Connection to server");
-        } catch (ServersUnavailableException e) {
-            JOptionPane.showMessageDialog(null, "No available servers for now");
-        }
+        refreshButton.doClick();
+        setTitle("Connection to server");
     }
 }

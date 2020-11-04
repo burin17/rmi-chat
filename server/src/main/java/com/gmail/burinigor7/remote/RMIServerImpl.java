@@ -12,11 +12,12 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RMIServerImpl implements RMIServer {
     private Registry registry = null;
-    private final Map<String, Long> activeUsers = new HashMap<>();
-    private final List<Message> commonMessages = new ArrayList<>();
+    private final Map<String, Long> activeUsers = new ConcurrentHashMap<>();
+    private final List<Message> commonMessages = Collections.synchronizedList(new ArrayList<>());
 
     public RMIServerImpl(String serverName) {
         String serverRemoteObjectName = "RMIServer" + serverName;
@@ -52,7 +53,6 @@ public class RMIServerImpl implements RMIServer {
                     throw new RuntimeException(e);
                 }
             }
-        } else {
         }
     }
 
@@ -60,7 +60,8 @@ public class RMIServerImpl implements RMIServer {
     public void sendCommonMessageToServer(Message msg) {
         if(isPermit(msg.getSenderUsername(), msg.getSenderSessionId())) {
             commonMessages.add(msg);
-            for (Long sessionId : activeUsers.values()) {
+            Collection<Long> sessions = activeUsers.values();
+            for (Long sessionId : sessions) {
                 String remoteObjectName = "User" + sessionId;
                 try {
                     ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
@@ -74,18 +75,22 @@ public class RMIServerImpl implements RMIServer {
 
     @Override
     public long connect(String username) throws UsernameInUseException {
-        if(activeUsers.containsKey(username))
-            throw new UsernameInUseException();
-        long sessionId = new Random().nextLong();
-        activeUsers.put(username, sessionId);
+        long sessionId;
+        synchronized (this) {
+            if (activeUsers.containsKey(username))
+                throw new UsernameInUseException();
+            sessionId = new Random().nextLong();
+            activeUsers.put(username, sessionId);
+        }
         refreshUserListForAll(sessionId);
         return sessionId;
     }
 
     private void refreshUserListForAll(long sessionId) {
-        for (Long session : activeUsers.values()) {
-            if(sessionId != session) {
-                String remoteObjectName = "User" + session;
+        Collection<Long> session = activeUsers.values();
+        for (Long id : session) {
+            if(id != sessionId) {
+                String remoteObjectName = "User" + id;
                 try {
                     ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
                     chatUser.refreshAvailableDialogsList();
@@ -99,7 +104,7 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public List<Message> getCommonDialog(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            return new ArrayList<>(commonMessages);
+            return commonMessages;
         }
         return null;
     }
@@ -107,7 +112,7 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public Set<String> getActiveUsers(String username, long sessionId) {
         if(isPermit(username, sessionId)) {
-            Set<String> res = new HashSet<>(activeUsers.keySet());
+            Set<String> res = activeUsers.keySet();
             res.add("Common dialog");
             return res;
         } return null;

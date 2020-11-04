@@ -15,16 +15,14 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Set;
 
 public class ClientRemoteImpl implements ClientRemote {
-    private final Registry registry;
-    private final long sessionId;
     private final UserForm userForm;
     public ClientRemoteImpl(UserForm userForm) {
         this.userForm = userForm;
-        this.sessionId = userForm.getUser().getSessionId();
+        long sessionId = userForm.getUser().getSessionId();
         String remoteObjectName = "User" + sessionId;
         try {
             UnicastRemoteObject.exportObject(this, 0);
-            registry = LocateRegistry.getRegistry(1099);
+            Registry registry = LocateRegistry.getRegistry(1099);
             registry.bind(remoteObjectName, this);
         } catch (RemoteException | AlreadyBoundException e) {
             throw new RuntimeException(e);
@@ -49,11 +47,13 @@ public class ClientRemoteImpl implements ClientRemote {
         JList<String> dialogs = userForm.getDialogsList();
         DefaultListModel<String> dialogsModel = new DefaultListModel<>();
         try {
-            Set<String> availableDialogs = userForm.getUser().getActiveUsers();
-            for (String username : availableDialogs)
-                if (!username.equals(userForm.getUser().getUsername()))
-                    dialogsModel.addElement(username);
-            dialogs.setModel(dialogsModel);
+            synchronized (this) {
+                Set<String> availableDialogs = userForm.getUser().getActiveUsers();
+                for (String username : availableDialogs)
+                    if (!username.equals(userForm.getUser().getUsername()))
+                        dialogsModel.addElement(username);
+                dialogs.setModel(dialogsModel);
+            }
         } catch (SpecifiedServerUnavailableException e) {
             userForm.serverUnavailable();
         }

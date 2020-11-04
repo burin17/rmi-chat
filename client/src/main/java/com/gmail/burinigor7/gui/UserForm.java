@@ -120,7 +120,9 @@ public class UserForm extends JFrame {
                 else dialog.append(message.getSenderUsername()).append(": ")
                         .append(message.getContent()).append('\n');
             }
-            chat.setText(dialog.toString());
+            synchronized (this) {
+                chat.setText(dialog.toString());
+            }
         } catch (SpecifiedServerUnavailableException e) {
             serverUnavailable();
         }

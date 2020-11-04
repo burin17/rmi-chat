@@ -10,6 +10,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class User implements Serializable {
     public static final String COMMON_DIALOG_KEY = "Common dialog";
@@ -18,8 +19,8 @@ public class User implements Serializable {
     private long sessionId;
     private String username;
     private ClientRemote clientRemote;
-    private final Map<String, List<Message>> messagesStorage = new HashMap<>() {{
-        put(COMMON_DIALOG_KEY, new ArrayList<>());
+    private final Map<String, List<Message>> messagesStorage = new ConcurrentHashMap<>() {{
+        put(COMMON_DIALOG_KEY, Collections.synchronizedList(new ArrayList<>()));
     }};
 
     public void disconnectFromServer() {
@@ -41,6 +42,7 @@ public class User implements Serializable {
         messagesStorage.putIfAbsent(recipient, new ArrayList<>());
         messagesStorage.get(recipient).add(msg);
     }
+
     public void addObtainedMessage(String content, String sender) {
         Message msg = new Message()
                 .setContent(content)
