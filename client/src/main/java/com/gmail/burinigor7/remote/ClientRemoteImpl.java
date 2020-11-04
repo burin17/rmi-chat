@@ -2,6 +2,7 @@ package com.gmail.burinigor7.remote;
 
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.gui.UserForm;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 
@@ -41,18 +42,20 @@ public class ClientRemoteImpl implements ClientRemote {
                 .equals(msg.getRecipientUsername()))) {
             userForm.refreshChat();
         }
-        System.out.println("Message: " + msg.getContent() +
-                "; Sender: " + msg.getSenderUsername());
     }
 
     @Override
     public void refreshAvailableDialogsList() {
         JList<String> dialogs = userForm.getDialogsList();
         DefaultListModel<String> dialogsModel = new DefaultListModel<>();
-        Set<String> availableDialogs = userForm.getUser().getActiveUsers();
-        for(String username : availableDialogs)
-            if(!username.equals(userForm.getUser().getUsername()))
-                dialogsModel.addElement(username);
-        dialogs.setModel(dialogsModel);
+        try {
+            Set<String> availableDialogs = userForm.getUser().getActiveUsers();
+            for (String username : availableDialogs)
+                if (!username.equals(userForm.getUser().getUsername()))
+                    dialogsModel.addElement(username);
+            dialogs.setModel(dialogsModel);
+        } catch (SpecifiedServerUnavailableException e) {
+            userForm.serverUnavailable();
+        }
     }
 }

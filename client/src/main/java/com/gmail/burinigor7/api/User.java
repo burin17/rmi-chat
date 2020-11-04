@@ -1,6 +1,7 @@
 package com.gmail.burinigor7.api;
 
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
@@ -21,15 +22,13 @@ public class User implements Serializable {
         put(COMMON_DIALOG_KEY, new ArrayList<>());
     }};
 
-    public boolean disconnectFromServer() {
+    public void disconnectFromServer() {
         try {
             String remoteObjectName = "User" + sessionId;
             LocateRegistry.getRegistry(1099)
                     .unbind(remoteObjectName);
-            return server.disconnect(username, sessionId);
-        } catch (RemoteException | NotBoundException e) {
-            throw new RuntimeException();
-        }
+            server.disconnect(username, sessionId);
+        } catch (RemoteException | NotBoundException ignore) {}
     }
 
 
@@ -52,7 +51,8 @@ public class User implements Serializable {
         messagesStorage.get(sender).add(msg);
     }
 
-    public User(String username, long sessionId, String serverName) {
+    public User(String username, long sessionId, String serverName)
+            throws SpecifiedServerUnavailableException {
         try {
             String serverRemoteObject = "RMIServer" + serverName;
             this.sessionId = sessionId;
@@ -62,13 +62,13 @@ public class User implements Serializable {
             messagesStorage.get(COMMON_DIALOG_KEY)
                     .addAll(server.getCommonDialog(username, sessionId));
         } catch (RemoteException | NotBoundException e) {
-            throw new RuntimeException(e);
+            throw new SpecifiedServerUnavailableException(e);
         }
     }
 
-    public void sendMessage(String content, String recipient) {
+    public void sendMessage(String content, String recipient)
+            throws SpecifiedServerUnavailableException {
         if(recipient != null) {
-            System.out.println("User.sendMessage()");
             if (!recipient.equals(COMMON_DIALOG_KEY)) {
                 Message msg = new Message()
                         .setRecipientUsername(recipient)
@@ -78,7 +78,7 @@ public class User implements Serializable {
                 try {
                     server.sendMessageToServer(msg);
                 } catch (RemoteException e) {
-                    throw new RuntimeException(e);
+                    throw new SpecifiedServerUnavailableException(e);
                 }
                 addSentMessage(content, recipient);
             } else {
@@ -87,7 +87,8 @@ public class User implements Serializable {
         }
     }
 
-    public void sendCommonMessage(String content) {
+    public void sendCommonMessage(String content)
+            throws SpecifiedServerUnavailableException {
         Message msg = new Message()
                 .setSenderUsername(username)
                 .setSenderSessionId(sessionId)
@@ -95,23 +96,17 @@ public class User implements Serializable {
         try {
             server.sendCommonMessageToServer(msg);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            throw new SpecifiedServerUnavailableException(e);
         }
     }
 
-    public List<Message> getCommonDialog() {
-        try {
-            return new ArrayList<>(server.getCommonDialog(username, sessionId));
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
-    public Set<String> getActiveUsers() {
+    public Set<String> getActiveUsers()
+            throws SpecifiedServerUnavailableException{
         try {
-            return new HashSet<>(server.getActiveUsers(username, sessionId));
+            return server.getActiveUsers(username, sessionId);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            throw new SpecifiedServerUnavailableException(e);
         }
     }
 
@@ -158,7 +153,8 @@ public class User implements Serializable {
         return server;
     }
 
-    public List<Message> getDialog(String dialogName) {
+    public List<Message> getDialog(String dialogName)
+            throws SpecifiedServerUnavailableException {
         if(dialogName != null) {
             if (!dialogName.equals(COMMON_DIALOG_KEY)) {
                 messagesStorage.putIfAbsent(dialogName, new ArrayList<>());
@@ -167,7 +163,7 @@ public class User implements Serializable {
             try {
                 return server.getCommonDialog(username, sessionId);
             } catch (RemoteException e) {
-                throw new RuntimeException(e);
+                throw new SpecifiedServerUnavailableException(e);
             }
         }
         return new ArrayList<>();

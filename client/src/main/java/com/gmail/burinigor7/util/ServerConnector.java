@@ -2,7 +2,7 @@ package com.gmail.burinigor7.util;
 
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.exception.ServersUnavailableException;
-import com.gmail.burinigor7.exception.SpecifiedServerUnavailable;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.server.RMIServer;
 
@@ -40,7 +40,7 @@ public class ServerConnector {
     }
 
     public static User connectToServer(String username, String serverName)
-            throws ServersUnavailableException, SpecifiedServerUnavailable {
+            throws ServersUnavailableException, SpecifiedServerUnavailableException {
         initRegistry();
         try {
             String remoteObjectName = "RMIServer" + serverName;
@@ -52,7 +52,7 @@ public class ServerConnector {
                 return null;
             }
         } catch (RemoteException | NotBoundException e) {
-            throw new SpecifiedServerUnavailable(e);
+            throw new SpecifiedServerUnavailableException(e);
         }
 //        throw new ServersUnavailableException(null);
     }

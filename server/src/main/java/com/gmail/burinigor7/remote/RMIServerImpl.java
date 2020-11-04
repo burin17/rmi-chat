@@ -51,11 +51,8 @@ public class RMIServerImpl implements RMIServer {
                 } catch (RemoteException | NotBoundException e) {
                     throw new RuntimeException(e);
                 }
-                System.out.println("Message from " +  msg.getSenderUsername() +
-                        " to " + msg.getRecipientUsername());
             }
         } else {
-            System.out.println("Message not send");
         }
     }
 
@@ -72,7 +69,6 @@ public class RMIServerImpl implements RMIServer {
                     throw new RuntimeException(e);
                 }
             }
-            System.out.println("Common message from " + msg.getSenderUsername());
         }
     }
 

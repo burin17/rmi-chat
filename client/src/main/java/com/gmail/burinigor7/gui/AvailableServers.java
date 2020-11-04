@@ -2,7 +2,7 @@ package com.gmail.burinigor7.gui;
 
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.exception.ServersUnavailableException;
-import com.gmail.burinigor7.exception.SpecifiedServerUnavailable;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.remote.ClientRemoteImpl;
 import com.gmail.burinigor7.util.ServerConnector;
 
@@ -61,7 +61,7 @@ public class AvailableServers extends JFrame {
                         } else {
                             JOptionPane.showMessageDialog(null, "Typed username already in use!");
                         }
-                    } catch (SpecifiedServerUnavailable | ServersUnavailableException e2) {
+                    } catch (SpecifiedServerUnavailableException | ServersUnavailableException e2) {
                         refreshButton.doClick();
                         JOptionPane.showMessageDialog(null, "Specified server unavailable");
                     }
@@ -78,9 +78,12 @@ public class AvailableServers extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         try {
             List<String> serversNames = ServerConnector.availableServers();
-            for(String name : serversNames) {
-                serversModel.addElement(name);
-            }
+            if(serversNames.size() == 0) {
+                JOptionPane.showMessageDialog(null, "No available servers for now");
+            } else
+                for (String name : serversNames) {
+                    serversModel.addElement(name);
+                }
             serversList.setModel(serversModel);
             setTitle("Connection to server");
         } catch (ServersUnavailableException e) {

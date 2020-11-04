@@ -2,6 +2,7 @@ package com.gmail.burinigor7.gui;
 
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -55,8 +56,12 @@ public class UserForm extends JFrame {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                user.sendMessage(messageTextField.getText(), dialogsList.getSelectedValue());
-                refreshChat();
+                try {
+                    user.sendMessage(messageTextField.getText(), dialogsList.getSelectedValue());
+                    refreshChat();
+                } catch (SpecifiedServerUnavailableException e) {
+                    serverUnavailable();
+                }
             }
         });
     }
@@ -67,29 +72,33 @@ public class UserForm extends JFrame {
         pack();
         setVisible(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        Set<String> participants = user.getActiveUsers();
-        DefaultListModel<String> dialogsModel = new DefaultListModel<>();
-        for(String participant : participants) {
-            if(!participant.equals(user.getUsername()))
-            dialogsModel.addElement(participant);
-        }
-        dialogsList.setModel(dialogsModel);
-        setTitle("Chat");
-        String serverInfo = "Server: " + serverName;
-        String userInfo = "Username: " + user.getUsername();
-        serverInfoLabel.setText(serverInfo);
-        userInfoLabel.setText(userInfo);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent event) {
-                try {
-                    user.getServer().disconnect(user.getUsername(), user.getSessionId());
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                }
+        try {
+            Set<String> participants = user.getActiveUsers();
+            DefaultListModel<String> dialogsModel = new DefaultListModel<>();
+            for (String participant : participants) {
+                if (!participant.equals(user.getUsername()))
+                    dialogsModel.addElement(participant);
             }
-        });
-        chat.setEditable(false);
+            dialogsList.setModel(dialogsModel);
+            setTitle("Chat");
+            String serverInfo = "Server: " + serverName;
+            String userInfo = "Username: " + user.getUsername();
+            serverInfoLabel.setText(serverInfo);
+            userInfoLabel.setText(userInfo);
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent event) {
+                    try {
+                        user.getServer().disconnect(user.getUsername(), user.getSessionId());
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            chat.setEditable(false);
+        } catch (SpecifiedServerUnavailableException e) {
+            serverUnavailable();
+        }
     }
 
     public User getUser() {
@@ -101,16 +110,25 @@ public class UserForm extends JFrame {
     }
 
     public void refreshChat() {
-        List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
-        System.out.println(messagesForDialogArea);
-        StringBuilder dialog = new StringBuilder();
-        for(Message message : messagesForDialogArea) {
-            if(message.getSenderUsername().equals(user.getUsername()))
-                dialog.append("You: ").append(message.getContent())
-                        .append('\n');
-            else dialog.append(message.getSenderUsername()).append(": ")
-                    .append(message.getContent()).append('\n');
+        try {
+            List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
+            StringBuilder dialog = new StringBuilder();
+            for (Message message : messagesForDialogArea) {
+                if (message.getSenderUsername().equals(user.getUsername()))
+                    dialog.append("You: ").append(message.getContent())
+                            .append('\n');
+                else dialog.append(message.getSenderUsername()).append(": ")
+                        .append(message.getContent()).append('\n');
+            }
+            chat.setText(dialog.toString());
+        } catch (SpecifiedServerUnavailableException e) {
+            serverUnavailable();
         }
-        chat.setText(dialog.toString());
+    }
+
+    public void serverUnavailable() {
+        JOptionPane.showMessageDialog(null, "Current server unavailable");
+        dispose();
+        new AvailableServers();
     }
 }
