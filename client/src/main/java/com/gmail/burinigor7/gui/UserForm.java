@@ -1,7 +1,7 @@
 package com.gmail.burinigor7.gui;
 
 import com.gmail.burinigor7.api.User;
-import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.domain.CommonMessage;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.util.MessageSenderThread;
 
@@ -86,7 +86,7 @@ public class UserForm extends JFrame {
                 @Override
                 public void windowClosing(WindowEvent event) {
                     try {
-                        user.getServer().disconnect(user.getUsername(), user.getSessionId());
+                        user.getServer().disconnect(user.getUsername());
                     } catch (RemoteException e) {
                         throw new RuntimeException(e);
                     }
@@ -108,14 +108,11 @@ public class UserForm extends JFrame {
 
     public void refreshChat() {
         try {
-            List<Message> messagesForDialogArea = user.getDialog(dialogsList.getSelectedValue());
+            List<String> messagesForDialogArea =
+                    user.getDialog(dialogsList.getSelectedValue());
             StringBuilder dialog = new StringBuilder();
-            for (Message message : messagesForDialogArea) {
-                if (message.getSenderUsername().equals(user.getUsername()))
-                    dialog.append("You: ").append(message.getContent())
-                            .append('\n');
-                else dialog.append(message.getSenderUsername()).append(": ")
-                        .append(message.getContent()).append('\n');
+            for (String message : messagesForDialogArea) {
+                dialog.append(message);
             }
             synchronized (this) {
                 chat.setText(dialog.toString());

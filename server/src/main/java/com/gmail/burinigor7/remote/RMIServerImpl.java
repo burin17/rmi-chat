@@ -1,6 +1,9 @@
 package com.gmail.burinigor7.remote;
 
+import com.gmail.burinigor7.domain.CommonMessage;
+import com.gmail.burinigor7.domain.Dialog;
 import com.gmail.burinigor7.domain.Message;
+import com.gmail.burinigor7.domain.PrivateMessage;
 import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 import com.gmail.burinigor7.remote.server.RMIServer;
@@ -16,10 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class RMIServerImpl implements RMIServer {
     private Registry registry = null;
-    private final Map<String, Long> activeUsers = new ConcurrentHashMap<>();
-    private final List<Message> commonMessages = Collections.synchronizedList(new ArrayList<>());
+    private final Map<String, ClientRemote> activeUsers = new ConcurrentHashMap<>();
+    private final List<Dialog> messageStorage
+            = Collections.synchronizedList(new ArrayList<>());
+    private final String serverName;
 
     public RMIServerImpl(String serverName) {
+        this.serverName = serverName;
         String serverRemoteObjectName = "RMIServer" + serverName;
         try {
             registry = LocateRegistry.createRegistry(1099);
@@ -41,77 +47,108 @@ public class RMIServerImpl implements RMIServer {
 
     @Override
     public void sendMessageToServer(Message msg) {
-        if(isPermit(msg.getSenderUsername(), msg.getSenderSessionId())) {
-            Long recipientSessionId;
-            if ((recipientSessionId = activeUsers
-                    .get(msg.getRecipientUsername())) != null) {
-                String remoteObjectName = "User" + recipientSessionId;
-                try {
-                    ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
-                    chatUser.sendMessageToUser(msg.setSenderSessionId(null));
-                } catch (RemoteException | NotBoundException e) {
-                    throw new RuntimeException(e);
-                }
+        if(isPermit(msg.getSender())) {
+            if(msg instanceof PrivateMessage) {
+                sendPrivateMessageToUser((PrivateMessage) msg);
+            }
+            if(msg instanceof CommonMessage) {
+                sendCommonMessageToUser((CommonMessage) msg);
+            }
+        }
+    }
+
+    private void sendCommonMessageToUser(CommonMessage commonMessage) {
+        saveCommonMessage(commonMessage);
+        for (ClientRemote remote : activeUsers.values()) {
+            try {
+                remote.sendMessageToUser(commonMessage);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void sendPrivateMessageToUser(PrivateMessage privateMessage) {
+        ClientRemote remote = activeUsers.get(privateMessage.getRecipient());
+        savePrivateMessage(privateMessage);
+        try {
+            remote.sendMessageToUser(privateMessage);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void savePrivateMessage(PrivateMessage msg) {
+        Dialog dialog = dialog(msg.getSender(), msg.getRecipient());
+        if(dialog.isNew()) {
+            messageStorage.add(dialog);
+        }
+        dialog.addMessage(msg);
+    }
+
+    private void saveCommonMessage(CommonMessage msg) {
+        Dialog dialog = dialog("Common dialog", null);
+        if(dialog.isNew()) {
+            messageStorage.add(dialog);
+        }
+        dialog.addMessage(msg);
+    }
+
+    private Dialog dialog(String username1, String username2) {
+        Dialog newDialog = new Dialog(username1, username2);
+        int idx = messageStorage.indexOf(newDialog);
+        if(idx != -1) {
+            return messageStorage.get(idx);
+        }
+        return newDialog;
+    }
+
+    @Override
+    public void connect(String username) {
+        ClientRemote remote;
+        synchronized (activeUsers) {
+            String clientRemoteName = "User" + serverName + username;
+            try {
+                remote = (ClientRemote) registry.lookup(clientRemoteName);
+                activeUsers.put(username, remote);
+            } catch (RemoteException | NotBoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        refreshUserListForAll(remote);
+    }
+
+    private void refreshUserListForAll(ClientRemote except) {
+        Collection<ClientRemote> remotes = activeUsers.values();
+        for (ClientRemote remote : remotes) {
+            try {
+                if(except != remote)
+                    remote.refreshAvailableDialogsList();
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
             }
         }
     }
 
     @Override
-    public void sendCommonMessageToServer(Message msg) {
-        if(isPermit(msg.getSenderUsername(), msg.getSenderSessionId())) {
-            commonMessages.add(msg);
-            Collection<Long> sessions = activeUsers.values();
-            for (Long sessionId : sessions) {
-                String remoteObjectName = "User" + sessionId;
-                try {
-                    ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
-                    chatUser.sendMessageToUser(msg.setSenderSessionId(null));
-                } catch (RemoteException | NotBoundException e) {
-                    throw new RuntimeException(e);
-                }
+    public List<String> getDialog(String requesting, String otherUser) {
+        if(isPermit(requesting)) {
+            List<String> res = new ArrayList<>();
+            for(Object o : dialog(otherUser.equals("Common dialog") ? null : requesting,
+                    otherUser).getMessages()) {
+                Message msg = (Message) o;
+                if(requesting.equals(msg.getSender()))
+                    res.add("You : " + msg.getContent() + "\n");
+                else res.add(msg.getSender() + " : " + msg.getContent() + "\n");
             }
-        }
-    }
-
-    @Override
-    public long connect(String username) throws UsernameInUseException {
-        long sessionId;
-        synchronized (this) {
-            if (activeUsers.containsKey(username))
-                throw new UsernameInUseException();
-            sessionId = new Random().nextLong();
-            activeUsers.put(username, sessionId);
-        }
-        refreshUserListForAll(sessionId);
-        return sessionId;
-    }
-
-    private void refreshUserListForAll(long sessionId) {
-        Collection<Long> session = activeUsers.values();
-        for (Long id : session) {
-            if(id != sessionId) {
-                String remoteObjectName = "User" + id;
-                try {
-                    ClientRemote chatUser = (ClientRemote) registry.lookup(remoteObjectName);
-                    chatUser.refreshAvailableDialogsList();
-                } catch (RemoteException | NotBoundException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Message> getCommonDialog(String username, long sessionId) {
-        if(isPermit(username, sessionId)) {
-            return commonMessages;
+            return res;
         }
         return null;
     }
 
     @Override
-    public Set<String> getActiveUsers(String username, long sessionId) {
-        if(isPermit(username, sessionId)) {
+    public Set<String> getActiveUsers(String username) {
+        if(isPermit(username)) {
             Set<String> res = new HashSet<>(activeUsers.keySet());
             res.add("Common dialog");
             return res;
@@ -119,24 +156,24 @@ public class RMIServerImpl implements RMIServer {
     }
 
     @Override
-    public boolean disconnect(String username, long sessionId) {
-        if(isPermit(username, sessionId)) {
+    public boolean disconnect(String username) {
+        if(isPermit(username)) {
             activeUsers.remove(username);
-            refreshUserListForAll(sessionId);
+            refreshUserListForAll(null);
             return true;
         }
         return false;
     }
 
-    public boolean disconnect(String username) {
-        Long value = activeUsers.remove(username);
-        return value != null;
-    }
-
-    private boolean isPermit(String senderUsername, long senderSessionId) {
-        Long session = activeUsers.get(senderUsername);
-        if(session != null)
-            return session.equals(senderSessionId);
-        return false;
+    private boolean isPermit(String senderUsername) {
+        return activeUsers.get(senderUsername) != null;
     }
 }
+
+// все сообщения хранятся на сервере
+// отправка сообщений пользователям с сервера (пул потоков) распараллелена
+// Мапа активных пользователей - <String, ClientRemote>
+// клиент не хранит сообщения
+// иерархия Message, у сервера один метод для общих и личных сообщений.
+// написать свою Map
+// работа ConcurrencyHashMap

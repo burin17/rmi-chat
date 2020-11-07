@@ -3,6 +3,7 @@ package com.gmail.burinigor7.gui;
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.exception.ServersUnavailableException;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
+import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.ClientRemoteImpl;
 import com.gmail.burinigor7.util.ServerConnector;
 
@@ -46,7 +47,7 @@ public class AvailableServers extends JFrame {
         });
         connectButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent event) {
                 String username = usernameField.getText();
                 String serverName = serversList.getSelectedValue();
                 if(serverName == null) {
@@ -55,11 +56,13 @@ public class AvailableServers extends JFrame {
                     JOptionPane.showMessageDialog(null, "Type the username!");
                 } else {
                     try {
-                        User user = ServerConnector.connectToServer(username, serverName);
-                        if (user != null) {
+                        String remoteObjectName = "User" + serverName + username;
+                        try {
+                            ClientRemoteImpl remote = new ClientRemoteImpl(remoteObjectName);
+                            User user = ServerConnector.connectToServer(username, serverName);
                             dispose();
-                            new ClientRemoteImpl(new UserForm(user, serverName));
-                        } else {
+                            remote.setUserForm(new UserForm(user, serverName));
+                        } catch (UsernameInUseException e) {
                             JOptionPane.showMessageDialog(null, "Typed username already in use!");
                         }
                     } catch (SpecifiedServerUnavailableException | ServersUnavailableException e2) {
