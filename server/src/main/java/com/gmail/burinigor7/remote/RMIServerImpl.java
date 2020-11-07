@@ -4,9 +4,9 @@ import com.gmail.burinigor7.domain.CommonMessage;
 import com.gmail.burinigor7.domain.Dialog;
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.domain.PrivateMessage;
-import com.gmail.burinigor7.exception.UsernameInUseException;
 import com.gmail.burinigor7.remote.client.ClientRemote;
 import com.gmail.burinigor7.remote.server.RMIServer;
+import com.gmail.burinigor7.util.SendMessageTask;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -16,6 +16,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class RMIServerImpl implements RMIServer {
     private Registry registry = null;
@@ -23,6 +25,8 @@ public class RMIServerImpl implements RMIServer {
     private final List<Dialog> messageStorage
             = Collections.synchronizedList(new ArrayList<>());
     private final String serverName;
+    private final ThreadPoolExecutor threadPool =
+            (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
     public RMIServerImpl(String serverName) {
         this.serverName = serverName;
@@ -47,34 +51,30 @@ public class RMIServerImpl implements RMIServer {
 
     @Override
     public void sendMessageToServer(Message msg) {
-        if(isPermit(msg.getSender())) {
-            if(msg instanceof PrivateMessage) {
-                sendPrivateMessageToUser((PrivateMessage) msg);
-            }
-            if(msg instanceof CommonMessage) {
-                sendCommonMessageToUser((CommonMessage) msg);
-            }
-        }
+        threadPool.submit(new SendMessageTask(msg, this));
     }
 
-    private void sendCommonMessageToUser(CommonMessage commonMessage) {
+    public void sendCommonMessageToUser(CommonMessage commonMessage) {
         saveCommonMessage(commonMessage);
-        for (ClientRemote remote : activeUsers.values()) {
+        for(String username : activeUsers.keySet()) {
             try {
-                remote.sendMessageToUser(commonMessage);
+                activeUsers.get(username).sendMessageToUser(commonMessage);
             } catch (RemoteException e) {
-                throw new RuntimeException(e);
+                activeUsers.remove(username);
+                refreshUserListForAll(null);
             }
         }
+
     }
 
-    private void sendPrivateMessageToUser(PrivateMessage privateMessage) {
+    public void sendPrivateMessageToUser(PrivateMessage privateMessage) {
         ClientRemote remote = activeUsers.get(privateMessage.getRecipient());
-        savePrivateMessage(privateMessage);
         try {
             remote.sendMessageToUser(privateMessage);
+            savePrivateMessage(privateMessage);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            activeUsers.remove(privateMessage.getRecipient());
+            refreshUserListForAll(null);
         }
     }
 
@@ -165,15 +165,15 @@ public class RMIServerImpl implements RMIServer {
         return false;
     }
 
-    private boolean isPermit(String senderUsername) {
+    public boolean isPermit(String senderUsername) {
         return activeUsers.get(senderUsername) != null;
     }
 }
 
-// все сообщения хранятся на сервере
+// все сообщения хранятся на сервере (ok)
 // отправка сообщений пользователям с сервера (пул потоков) распараллелена
-// Мапа активных пользователей - <String, ClientRemote>
-// клиент не хранит сообщения
-// иерархия Message, у сервера один метод для общих и личных сообщений.
+// Мапа активных пользователей - <String, ClientRemote> (ok)
+// клиент не хранит сообщения (ok)
+// иерархия Message, у сервера один метод для общих и личных сообщений. (ok)
 // написать свою Map
 // работа ConcurrencyHashMap

@@ -86,7 +86,6 @@ public class User implements Serializable {
         addMessage(content, recipient);
     }
 
-
     public Set<String> getActiveUsers()
             throws SpecifiedServerUnavailableException{
         try {
@@ -99,7 +98,6 @@ public class User implements Serializable {
     public String getUsername() {
         return username;
     }
-
 
     @Override
     public String toString() {

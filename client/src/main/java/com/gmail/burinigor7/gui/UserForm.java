@@ -1,7 +1,6 @@
 package com.gmail.burinigor7.gui;
 
 import com.gmail.burinigor7.api.User;
-import com.gmail.burinigor7.domain.CommonMessage;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.util.MessageSenderThread;
 
