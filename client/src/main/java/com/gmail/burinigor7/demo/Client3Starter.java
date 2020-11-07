@@ -1,4 +1,4 @@
-package com.gmail.burinigor7;
+package com.gmail.burinigor7.demo;
 
 import com.gmail.burinigor7.gui.AvailableServers;
 

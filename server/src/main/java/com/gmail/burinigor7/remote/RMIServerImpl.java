@@ -51,6 +51,12 @@ public class RMIServerImpl implements RMIServer {
 
     @Override
     public void sendMessageToServer(Message msg) {
+        System.out.println(Thread.currentThread());
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         threadPool.submit(new SendMessageTask(msg, this));
     }
 
