@@ -1,9 +1,6 @@
 package com.gmail.burinigor7.remote.server;
 
-import com.gmail.burinigor7.domain.CommonMessage;
 import com.gmail.burinigor7.domain.Message;
-import com.gmail.burinigor7.exception.UsernameInUseException;
-import com.gmail.burinigor7.remote.client.ClientRemote;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

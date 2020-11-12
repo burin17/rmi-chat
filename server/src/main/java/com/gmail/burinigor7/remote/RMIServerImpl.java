@@ -106,24 +106,22 @@ public class RMIServerImpl implements RMIServer {
     @Override
     public void connect(String username) {
         ClientRemote remote;
-        synchronized (activeUsers) {
-            String clientRemoteName = "User" + serverName + username;
-            try {
-                remote = (ClientRemote) registry.lookup(clientRemoteName);
-                activeUsers.put(username, remote);
-            } catch (RemoteException | NotBoundException e) {
-                throw new RuntimeException(e);
-            }
+        String clientRemoteName = "User" + serverName + username;
+        try {
+            remote = (ClientRemote) registry.lookup(clientRemoteName);
+            activeUsers.put(username, remote);
+        } catch (RemoteException | NotBoundException e) {
+            throw new RuntimeException(e);
         }
         refreshUserListForAll(remote);
     }
 
     private void refreshUserListForAll(ClientRemote except) {
-        Collection<ClientRemote> remotes = activeUsers.values();
+        Collection<ClientRemote> remotes = new ArrayList<>(activeUsers.values());
+        remotes.remove(except);
         for (ClientRemote remote : remotes) {
             try {
-                if(except != remote)
-                    remote.refreshAvailableDialogsList();
+                remote.refreshAvailableDialogsList();
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }

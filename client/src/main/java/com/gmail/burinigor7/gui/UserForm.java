@@ -113,12 +113,14 @@ public class UserForm extends JFrame {
             for (String message : messagesForDialogArea) {
                 dialog.append(message);
             }
-            synchronized (this) {
-                chat.setText(dialog.toString());
-            }
+            chat.setText(dialog.toString());
         } catch (SpecifiedServerUnavailableException e) {
             serverUnavailable();
         }
+    }
+
+    public JTextArea getChat() {
+        return chat;
     }
 
     public void serverUnavailable() {

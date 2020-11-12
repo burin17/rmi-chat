@@ -29,7 +29,7 @@ public class User implements Serializable, ClientRemote {
     private final String serverName;
     private final String username;
     private final Map<String, List<String>> messageStorage = new ConcurrentHashMap<>();
-    private UserForm userForm;
+    private final UserForm userForm;
 
     public void disconnectFromServer() {
         try {
@@ -60,17 +60,14 @@ public class User implements Serializable, ClientRemote {
             Registry registry = LocateRegistry.getRegistry(1099);
             registry.bind(remoteObjectName, this);
             String remoteServerObjectName = "RMIServer" + serverName;
-            RMIServer server = (RMIServer) LocateRegistry.getRegistry(1099)
-                    .lookup(remoteServerObjectName);
-            server.connect(username);
-            this.serverName = serverName;
-            String serverRemoteObject = "RMIServer" + serverName;
-            this.username = username;
             this.server = (RMIServer) LocateRegistry.getRegistry(1099)
-                    .lookup(serverRemoteObject);
+                    .lookup(remoteServerObjectName);
+            this.serverName = serverName;
+            this.username = username;
+            server.connect(username);
+            this.userForm = new UserForm(this, serverName);
             messageStorage.put(COMMON_DIALOG_KEY,
                     server.getDialog(username, COMMON_DIALOG_KEY));
-            System.out.println(messageStorage.get(COMMON_DIALOG_KEY));
         } catch (RemoteException e)  {
             throw new SpecifiedServerUnavailableException(e);
         } catch (AlreadyBoundException e) {
@@ -181,10 +178,6 @@ public class User implements Serializable, ClientRemote {
         return messageStorage;
     }
 
-    public void setUserForm(UserForm userForm) {
-        this.userForm = userForm;
-    }
-
     @Override
     public void sendMessageToUser(Message msg) {
         addMessageToUserStorage(msg);
@@ -218,18 +211,21 @@ public class User implements Serializable, ClientRemote {
 
     @Override
     public void refreshAvailableDialogsList() {
+        System.out.println("Thread start");
         JList<String> dialogs = userForm.getDialogsList();
         DefaultListModel<String> dialogsModel = new DefaultListModel<>();
         try {
-            synchronized (this) {
-                Set<String> availableDialogs = userForm.getUser().getActiveUsers();
-                for (String username : availableDialogs)
-                    if (!username.equals(userForm.getUser().getUsername()))
-                        dialogsModel.addElement(username);
-                dialogs.setModel(dialogsModel);
-            }
+            Set<String> availableDialogs = userForm.getUser().getActiveUsers();
+            for (String username : availableDialogs)
+                if (!username.equals(userForm.getUser().getUsername()))
+            dialogsModel.addElement(username);
+            dialogs.setModel(dialogsModel);
         } catch (SpecifiedServerUnavailableException e) {
             userForm.serverUnavailable();
         }
+    }
+
+    public UserForm getUserForm() {
+        return userForm;
     }
 }

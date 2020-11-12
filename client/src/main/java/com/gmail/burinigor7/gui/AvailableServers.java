@@ -55,9 +55,8 @@ public class AvailableServers extends JFrame {
                 } else {
                     try {
                         try {
-                            User user = new User(username, serverName);
+                            new User(username, serverName);
                             dispose();
-                            user.setUserForm(new UserForm(user, serverName));
                         } catch (UsernameInUseException e) {
                             JOptionPane.showMessageDialog(null, "Typed username already in use!");
                         }
