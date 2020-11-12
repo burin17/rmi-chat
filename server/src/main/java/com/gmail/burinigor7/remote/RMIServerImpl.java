@@ -26,7 +26,7 @@ public class RMIServerImpl implements RMIServer {
             = Collections.synchronizedList(new ArrayList<>());
     private final String serverName;
     private final ThreadPoolExecutor threadPool =
-            (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
 
     public RMIServerImpl(String serverName) {
         this.serverName = serverName;
@@ -51,12 +51,6 @@ public class RMIServerImpl implements RMIServer {
 
     @Override
     public void sendMessageToServer(Message msg) {
-        System.out.println(Thread.currentThread());
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         threadPool.submit(new SendMessageTask(msg, this));
     }
 
@@ -175,11 +169,3 @@ public class RMIServerImpl implements RMIServer {
         return activeUsers.get(senderUsername) != null;
     }
 }
-
-// все сообщения хранятся на сервере (ok)
-// отправка сообщений пользователям с сервера (пул потоков) распараллелена
-// Мапа активных пользователей - <String, ClientRemote> (ok)
-// клиент не хранит сообщения (ok)
-// иерархия Message, у сервера один метод для общих и личных сообщений. (ok)
-// написать свою Map
-// работа ConcurrencyHashMap

@@ -4,8 +4,6 @@ import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.exception.ServersUnavailableException;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.exception.UsernameInUseException;
-import com.gmail.burinigor7.remote.ClientRemoteImpl;
-import com.gmail.burinigor7.util.ServerConnector;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,7 +31,7 @@ public class AvailableServers extends JFrame {
             public void actionPerformed(ActionEvent event) {
                 try {
                     System.out.println("here");
-                    List<String> serversNames = ServerConnector.availableServers();
+                    List<String> serversNames = User.availableServers();
                     serversModel = new DefaultListModel<>();
                     for (String name : serversNames) {
                         serversModel.addElement(name);
@@ -56,12 +54,10 @@ public class AvailableServers extends JFrame {
                     JOptionPane.showMessageDialog(null, "Type the username!");
                 } else {
                     try {
-                        String remoteObjectName = "User" + serverName + username;
                         try {
-                            ClientRemoteImpl remote = new ClientRemoteImpl(remoteObjectName);
-                            User user = ServerConnector.connectToServer(username, serverName);
+                            User user = new User(username, serverName);
                             dispose();
-                            remote.setUserForm(new UserForm(user, serverName));
+                            user.setUserForm(new UserForm(user, serverName));
                         } catch (UsernameInUseException e) {
                             JOptionPane.showMessageDialog(null, "Typed username already in use!");
                         }
