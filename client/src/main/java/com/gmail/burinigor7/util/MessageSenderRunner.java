@@ -3,12 +3,12 @@ package com.gmail.burinigor7.util;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
 import com.gmail.burinigor7.gui.UserForm;
 
-public class MessageSenderThread extends Thread {
+public class MessageSenderRunner implements Runnable {
     private final UserForm userForm;
     private final String msgContent;
     private final String dialog;
 
-    public MessageSenderThread(UserForm userForm, String msgContent, String dialog) {
+    public MessageSenderRunner(UserForm userForm, String msgContent, String dialog) {
         this.userForm = userForm;
         this.msgContent = msgContent;
         this.dialog = dialog;

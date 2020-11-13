@@ -66,8 +66,6 @@ public class User implements Serializable, ClientRemote {
             this.username = username;
             server.connect(username);
             this.userForm = new UserForm(this, serverName);
-            messageStorage.put(COMMON_DIALOG_KEY,
-                    server.getDialog(username, COMMON_DIALOG_KEY));
         } catch (RemoteException e)  {
             throw new SpecifiedServerUnavailableException(e);
         } catch (AlreadyBoundException e) {
@@ -157,21 +155,8 @@ public class User implements Serializable, ClientRemote {
         return server;
     }
 
-    public List<String> getDialog(String dialogName)
-            throws SpecifiedServerUnavailableException {
-        List<String> localDialog = messageStorage.get(dialogName);
-        if(localDialog == null) {
-            try {
-                List<String> dialog;
-                if(!dialogName.equals(COMMON_DIALOG_KEY))
-                    dialog = server.getDialog(this.username, dialogName);
-                else dialog = server.getDialog(COMMON_DIALOG_KEY, null);
-                messageStorage.put(dialogName, dialog);
-                return dialog;
-            } catch (RemoteException e) {
-                throw new SpecifiedServerUnavailableException(e);
-            }
-        } else return localDialog;
+    public List<String> getDialog(String dialogName) {
+        return messageStorage.get(dialogName);
     }
 
     public Map<String, List<String>> getMessageStorage() {
@@ -211,7 +196,6 @@ public class User implements Serializable, ClientRemote {
 
     @Override
     public void refreshAvailableDialogsList() {
-        System.out.println("Thread start");
         JList<String> dialogs = userForm.getDialogsList();
         DefaultListModel<String> dialogsModel = new DefaultListModel<>();
         try {

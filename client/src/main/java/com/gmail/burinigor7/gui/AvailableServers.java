@@ -30,7 +30,6 @@ public class AvailableServers extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    System.out.println("here");
                     List<String> serversNames = User.availableServers();
                     serversModel = new DefaultListModel<>();
                     for (String name : serversNames) {

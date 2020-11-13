@@ -4,7 +4,6 @@ import com.gmail.burinigor7.domain.Message;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.List;
 import java.util.Set;
 
 public interface RMIServer extends Remote {
@@ -12,10 +11,7 @@ public interface RMIServer extends Remote {
 
     void connect(String username) throws RemoteException;
 
-    List<String> getDialog(String requesting, String otherUser) throws RemoteException;
-
     Set<String> getActiveUsers(String username) throws RemoteException;
 
     boolean disconnect(String username) throws RemoteException;
-
 }

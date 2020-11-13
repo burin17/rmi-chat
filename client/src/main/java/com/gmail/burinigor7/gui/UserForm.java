@@ -2,13 +2,15 @@ package com.gmail.burinigor7.gui;
 
 import com.gmail.burinigor7.api.User;
 import com.gmail.burinigor7.exception.SpecifiedServerUnavailableException;
-import com.gmail.burinigor7.util.MessageSenderThread;
+import com.gmail.burinigor7.util.MessageSenderRunner;
 
 import javax.swing.*;
 import java.awt.event.*;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class UserForm extends JFrame {
     private final User user;
@@ -34,6 +36,10 @@ public class UserForm extends JFrame {
     private JLabel userInfoLabel;
     private JScrollPane chatContentPanel;
     private final String serverName;
+    private final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors
+            .newFixedThreadPool(
+                    Runtime.getRuntime().availableProcessors()
+            );
 
     public UserForm(User user, String serverName) {
         this.serverName = serverName;
@@ -56,8 +62,8 @@ public class UserForm extends JFrame {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                new MessageSenderThread(UserForm.this,
-                        messageTextField.getText(), dialogsList.getSelectedValue()).start();
+                threadPool.submit(new MessageSenderRunner(UserForm.this,
+                        messageTextField.getText(), dialogsList.getSelectedValue()));
             }
         });
     }
@@ -106,17 +112,15 @@ public class UserForm extends JFrame {
     }
 
     public void refreshChat() {
-        try {
-            List<String> messagesForDialogArea =
-                    user.getDialog(dialogsList.getSelectedValue());
+        List<String> messagesForDialogArea =
+            user.getDialog(dialogsList.getSelectedValue());
+        if(messagesForDialogArea != null) {
             StringBuilder dialog = new StringBuilder();
             for (String message : messagesForDialogArea) {
                 dialog.append(message);
             }
             chat.setText(dialog.toString());
-        } catch (SpecifiedServerUnavailableException e) {
-            serverUnavailable();
-        }
+        } else chat.setText("Nothing here yet.");
     }
 
     public JTextArea getChat() {
