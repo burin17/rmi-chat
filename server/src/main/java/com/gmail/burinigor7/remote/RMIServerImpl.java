@@ -22,7 +22,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class RMIServerImpl implements RMIServer {
     private Registry registry = null;
     private final String serverName;
-
     private final Map<String, ClientRemote> activeUsers = new ConcurrentHashMap<>();
 
     private final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors

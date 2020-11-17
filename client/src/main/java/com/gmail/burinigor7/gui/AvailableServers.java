@@ -8,7 +8,11 @@ import com.gmail.burinigor7.exception.UsernameInUseException;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AvailableServers extends JFrame {
     private JPanel mainPanel;
@@ -30,7 +34,7 @@ public class AvailableServers extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 try {
-                    List<String> serversNames = User.availableServers();
+                    List<String> serversNames = availableServers();
                     serversModel = new DefaultListModel<>();
                     for (String name : serversNames) {
                         serversModel.addElement(name);
@@ -77,5 +81,16 @@ public class AvailableServers extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         refreshButton.doClick();
         setTitle("Connection to server");
+    }
+
+    private List<String> availableServers() throws ServersUnavailableException {
+        try {
+            return Arrays.stream(LocateRegistry.getRegistry(1099).list())
+                    .filter(remote -> remote.contains("RMIServer"))
+                    .map(name -> name.replace("RMIServer", ""))
+                    .collect(Collectors.toList());
+        } catch (RemoteException e) {
+            throw new ServersUnavailableException(e);
+        }
     }
 }

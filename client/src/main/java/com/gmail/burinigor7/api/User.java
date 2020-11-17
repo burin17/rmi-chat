@@ -20,7 +20,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class User implements Serializable, ClientRemote {
     private static final long serialVersionUID = 777L;
@@ -38,17 +37,6 @@ public class User implements Serializable, ClientRemote {
                     .unbind(remoteObjectName);
             server.disconnect(username);
         } catch (RemoteException | NotBoundException ignore) {}
-    }
-
-    public static List<String> availableServers() throws ServersUnavailableException {
-        try {
-            return Arrays.stream(LocateRegistry.getRegistry(1099).list())
-                    .filter(remote -> remote.contains("RMIServer"))
-                    .map(name -> name.replace("RMIServer", ""))
-                    .collect(Collectors.toList());
-        } catch (RemoteException e) {
-            throw new ServersUnavailableException(e);
-        }
     }
 
     public User(String username, String serverName)
