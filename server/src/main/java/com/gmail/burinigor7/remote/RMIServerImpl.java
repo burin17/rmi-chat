@@ -1,7 +1,6 @@
 package com.gmail.burinigor7.remote;
 
 import com.gmail.burinigor7.domain.CommonMessage;
-import com.gmail.burinigor7.domain.Dialog;
 import com.gmail.burinigor7.domain.Message;
 import com.gmail.burinigor7.domain.PrivateMessage;
 import com.gmail.burinigor7.remote.client.ClientRemote;

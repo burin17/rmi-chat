@@ -85,9 +85,11 @@ public class User implements Serializable, ClientRemote {
     }
 
     private void addMessage(String content, String dialogName) {
-        messageStorage.putIfAbsent(dialogName,
-                Collections.synchronizedList(new ArrayList<>()));
-        messageStorage.get(dialogName).add("You : " + content + "\n");
+        messageStorage.putIfAbsent(dialogName, new ArrayList<>());
+        List<String> messages = messageStorage.get(dialogName);
+        synchronized (messages) {
+            messages.add("You : " + content + "\n");
+        }
     }
 
     private void sendPrivateMessage(String content, String recipient)
@@ -168,11 +170,11 @@ public class User implements Serializable, ClientRemote {
             msgLine = "You : " + msg.getContent() + "\n";
         else msgLine = msg.getSender() + " : " + msg.getContent() + "\n";
         if(msg instanceof CommonMessage) {
-            userForm.getUser().getMessageStorage()
-                    .putIfAbsent(User.COMMON_DIALOG_KEY,
-                            Collections.synchronizedList(new ArrayList<>()));
-            userForm.getUser().getMessageStorage()
-                    .get(User.COMMON_DIALOG_KEY).add(msgLine);
+            messageStorage.putIfAbsent(User.COMMON_DIALOG_KEY, new ArrayList<>());
+            List<String> messages = messageStorage.get(User.COMMON_DIALOG_KEY);
+            synchronized (messages) {
+                messages.add(msgLine);
+            }
         } else {
             userForm.getUser().getMessageStorage()
                     .putIfAbsent(msg.getSender(),
