@@ -54,26 +54,8 @@ public class RMIServerImpl implements RMIServer {
         threadPool.submit(new SendMessageTask(msg, this));
     }
 
-    public void sendCommonMessageToUser(CommonMessage commonMessage) {
-        for(String username : activeUsers.keySet()) {
-            try {
-                activeUsers.get(username).sendMessageToUser(commonMessage);
-            } catch (RemoteException e) {
-                activeUsers.remove(username);
-                refreshUserListForAll(null);
-            }
-        }
-
-    }
-
-    public void sendPrivateMessageToUser(PrivateMessage privateMessage) {
-        ClientRemote remote = activeUsers.get(privateMessage.getRecipient());
-        try {
-            remote.sendMessageToUser(privateMessage);
-        } catch (RemoteException e) {
-            activeUsers.remove(privateMessage.getRecipient());
-            refreshUserListForAll(null);
-        }
+    public Map<String, ClientRemote> getActiveUsers() {
+        return activeUsers;
     }
 
     @Override
@@ -89,7 +71,7 @@ public class RMIServerImpl implements RMIServer {
         refreshUserListForAll(remote);
     }
 
-    private void refreshUserListForAll(ClientRemote except) {
+    public void refreshUserListForAll(ClientRemote except) {
         Collection<ClientRemote> remotes = new ArrayList<>(activeUsers.values());
         remotes.remove(except);
         for (ClientRemote remote : remotes) {

@@ -85,6 +85,7 @@ public class User implements Serializable, ClientRemote {
     }
 
     private void addMessage(String content, String dialogName) {
+
         messageStorage.putIfAbsent(dialogName, new ArrayList<>());
         List<String> messages = messageStorage.get(dialogName);
         synchronized (messages) {
@@ -176,11 +177,11 @@ public class User implements Serializable, ClientRemote {
                 messages.add(msgLine);
             }
         } else {
-            userForm.getUser().getMessageStorage()
-                    .putIfAbsent(msg.getSender(),
-                            Collections.synchronizedList(new ArrayList<>()));
-            userForm.getUser().getMessageStorage()
-                    .get(msg.getSender()).add(msgLine);
+            messageStorage.putIfAbsent(msg.getSender(), new ArrayList<>());
+            List<String> messages = messageStorage.get(msg.getSender());
+            synchronized (messages) {
+                messages.add(msgLine);
+            }
         }
     }
 
