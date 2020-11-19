@@ -20,6 +20,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class User implements Serializable, ClientRemote {
     private static final long serialVersionUID = 777L;
@@ -85,12 +86,8 @@ public class User implements Serializable, ClientRemote {
     }
 
     private void addMessage(String content, String dialogName) {
-
-        messageStorage.putIfAbsent(dialogName, new ArrayList<>());
-        List<String> messages = messageStorage.get(dialogName);
-        synchronized (messages) {
-            messages.add("You : " + content + "\n");
-        }
+        messageStorage.putIfAbsent(dialogName, new CopyOnWriteArrayList<>());
+        messageStorage.get(dialogName).add("You : " + content + "\n");
     }
 
     private void sendPrivateMessage(String content, String recipient)
@@ -171,17 +168,13 @@ public class User implements Serializable, ClientRemote {
             msgLine = "You : " + msg.getContent() + "\n";
         else msgLine = msg.getSender() + " : " + msg.getContent() + "\n";
         if(msg instanceof CommonMessage) {
-            messageStorage.putIfAbsent(User.COMMON_DIALOG_KEY, new ArrayList<>());
+            messageStorage.putIfAbsent(User.COMMON_DIALOG_KEY, new CopyOnWriteArrayList<>());
             List<String> messages = messageStorage.get(User.COMMON_DIALOG_KEY);
-            synchronized (messages) {
-                messages.add(msgLine);
-            }
+            messages.add(msgLine);
         } else {
-            messageStorage.putIfAbsent(msg.getSender(), new ArrayList<>());
+            messageStorage.putIfAbsent(msg.getSender(), new CopyOnWriteArrayList<>());
             List<String> messages = messageStorage.get(msg.getSender());
-            synchronized (messages) {
-                messages.add(msgLine);
-            }
+            messages.add(msgLine);
         }
     }
 
