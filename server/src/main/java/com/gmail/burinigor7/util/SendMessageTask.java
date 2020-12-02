@@ -32,11 +32,11 @@ public class SendMessageTask implements Runnable {
 
     private void sendCommonMessageToUser(CommonMessage commonMessage) {
         Map<String, ClientRemote> activeUsers = server.getActiveUsers();
-        for(String username : activeUsers.keySet()) {
+        for(Map.Entry<String, ClientRemote> entry : activeUsers.entrySet()) {
             try {
-                activeUsers.get(username).sendMessageToUser(commonMessage);
+                activeUsers.get(entry.getKey()).sendMessageToUser(commonMessage);
             } catch (RemoteException e) {
-                activeUsers.remove(username);
+                activeUsers.remove(entry.getKey());
                 server.refreshUserListForAll(null);
             }
         }
